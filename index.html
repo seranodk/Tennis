@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.0)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.1)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -126,6 +126,13 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 .tour b{display:block;font-size:14px}
 .tour i{font-style:normal;font-size:11px;color:var(--dim)}
 .tour .cup{font-family:var(--f-pixel);font-size:11px;color:var(--led)}
+.plist{display:grid;gap:3px;max-height:250px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.pr{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:baseline;text-align:left;padding:7px 9px;border-radius:5px;border:1px solid #22306a;background:#0d1640}
+.pr .rk{font-family:var(--f-pixel);font-size:11px;color:var(--led);font-variant-numeric:tabular-nums}
+.pr b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr i{font-style:normal;font-size:11px;color:var(--dim);white-space:nowrap}
+.pr.sel{background:var(--led);border-color:var(--led);color:#1a1200}.pr.sel .rk,.pr.sel i{color:#3a2a00}
+.pr:disabled{opacity:.35}
 .rank{font-family:var(--f-pixel);font-size:12px;color:var(--led)}
 .keys{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px;align-items:baseline}
 .keys kbd{font-family:var(--f-pixel);font-size:11px;background:#1a2558;border:1px solid #34449a;border-radius:3px;padding:2px 6px;white-space:nowrap}
@@ -199,9 +206,10 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
   <section class="screen dim" id="sSetup" hidden>
     <div class="wrap">
       <h2 id="setupTitle">Opvisning</h2>
-      <div class="card" id="sexCard" hidden><h3>TURNERING FOR</h3><div class="seg" id="sexSeg"></div></div>
-      <div class="card"><h3>DIN SPILLER</h3><div class="chars" id="cMe"></div></div>
-      <div class="card" id="oppCard"><h3>MODSTANDER</h3><div class="chars" id="cOpp"></div></div>
+      <div class="card" id="sexCard" hidden><h3 id="sexH">TURNERING FOR</h3><div class="seg" id="sexSeg"></div></div>
+      <div class="card" id="meCard"><h3>DIN SPILLER</h3><div class="chars" id="cMe"></div></div>
+      <div class="card" id="exCard"><h3 id="exMeH">DU SPILLER SOM</h3><div class="plist" id="pMe"></div></div>
+      <div class="card" id="oppCard"><h3>MODSTANDER</h3><div class="plist" id="pOpp"></div></div>
       <div class="card" id="tourCard" hidden><h3>GRAND SLAM · <span class="rank" id="rankPts"></span></h3><div class="tours" id="tourList"></div></div>
       <p class="hint" id="setupNote"></p>
       <div class="row2">
@@ -285,7 +293,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.0';
+const VERSION='v2.1';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -314,20 +322,21 @@ const SLAMS=[
 const RNAMES=['1. runde','2. runde','3. runde','4. runde','Kvartfinale','Semifinale','Finale'];
 const RPTS=[10,50,100,200,400,800,1300,2000];
 const LVT=[
- {react:.34,spd:.80,tsig:.30,margin:1.5,sc:1.45,net:.04,leave:.35,fault:.08},
- {react:.24,spd:.90,tsig:.20,margin:1.05,sc:1.05,net:.10,leave:.7,fault:.05},
- {react:.15,spd:.98,tsig:.12,margin:.75,sc:.78,net:.18,leave:.9,fault:.03},
- {react:.09,spd:1.05,tsig:.07,margin:.55,sc:.58,net:.26,leave:1,fault:.015}];
+ {react:.44,spd:.74,tsig:.36,margin:1.7,sc:1.75,net:.03,leave:.3,fault:.1},
+ {react:.34,spd:.82,tsig:.27,margin:1.35,sc:1.4,net:.06,leave:.55,fault:.075},
+ {react:.24,spd:.9,tsig:.18,margin:1.0,sc:1.05,net:.12,leave:.8,fault:.05},
+ {react:.15,spd:.98,tsig:.11,margin:.72,sc:.76,net:.2,leave:.95,fault:.03}];
 function lvp(l){l=Math.max(1,Math.min(4,l));const i=Math.min(2,Math.floor(l-1)),t=l-1-i,a=LVT[i],b=LVT[i+1],o={};for(const k in a)o[k]=a[k]+(b[k]-a[k])*t;return o;}
 const SHOT={flat:{T:.92,g:9.8,m:.28,sc:1.1},slice:{T:1.2,g:7.2,m:.22,sc:.9},lob:{T:2.0,g:9.8,m:1.4,sc:1.0},smash:{T:.58,g:9.8,m:.12,sc:1.2}};
 
 /* ================= settings / storage ================= */
-const DEF={me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:1,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
+const DEF={exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:1,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
 let CFG=Object.assign({},DEF), PROG={pts:{m:0,w:0},cups:{m:[0,0,0,0],w:[0,0,0,0]}};
 function load(){try{const a=JSON.parse(localStorage.getItem('tennis.cfg2')||'null');if(a)Object.assign(CFG,a);
   const b=JSON.parse(localStorage.getItem('tennis.prog2')||'null');if(b&&b.pts&&b.cups)PROG=b;}catch(e){}}
 function save(){try{localStorage.setItem('tennis.cfg2',JSON.stringify(CFG));localStorage.setItem('tennis.prog2',JSON.stringify(PROG));}catch(e){}}
 load();
+if(!CFG.exMe||typeof CFG.exMe!=='object')CFG.exMe={m:0,w:0};if(!CFG.exOpp||typeof CFG.exOpp!=='object')CFG.exOpp={m:-1,w:-1};
 
 /* ================= helpers ================= */
 const $=s=>document.querySelector(s);
@@ -346,12 +355,12 @@ const lo=document.createElement('canvas'), lx=lo.getContext('2d');
 const bg=document.createElement('canvas'), bgx=bg.getContext('2d');
 const nt=document.createElement('canvas'), ntx=nt.getContext('2d');
 let W=1,H=1,DPR=1,PX=3,LW=1,LH=1,F=1,OX=0,OY=0;
-const camY=-30.5, camZ=17.5, lookY=2.2;
+const camY=-26, camZ=27, lookY=1.2;
 const PA=Math.atan2(camZ,lookY-camY), CP=Math.cos(PA), SP=Math.sin(PA);
 const _p={x:0,y:0,s:0};
 function proj(x,y,z,o){o=o||_p;const dy=y-camY,dz=z-camZ;const d=dy*CP-dz*SP;const u=dy*SP+dz*CP;const k=F/d;o.x=OX+x*k;o.y=OY-u*k;o.s=k;return o;}
 function fit(rx,ry,rw,rh,narrow,bottom){F=1;OX=0;OY=0;const X=narrow?DW+.55:DW+1.3;
-  const pts=[[-X,-HL-1.9,0],[X,-HL-1.9,0],[-X,HL+1.3,0],[X,HL+1.3,0],[0,HL+.6,2.3]];
+  const pts=[[-X,-HL-1.9,0],[X,-HL-1.9,0],[-X,HL+1.3,0],[X,HL+1.3,0],[0,HL+2.2,2.6]];
   let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const q of pts){proj(q[0],q[1],q[2]);a=Math.min(a,_p.x);b=Math.max(b,_p.x);c=Math.min(c,_p.y);d=Math.max(d,_p.y);}
   const f=Math.min(rw/(b-a),rh/(d-c));F=f;OX=rx+rw/2-f*(a+b)/2;OY=bottom?ry+rh-f*d:ry+rh/2-f*(c+d)/2;}
 
@@ -454,21 +463,34 @@ function renderStatic(){
       // wear on grass baselines, scuffs on clay
       if(surf==='grass'&&ay>HL-2.4&&ay<HL+1.4&&ax<3.2){const t=.42*(1-ax/3.2)*(1-Math.abs(ay-HL+.4)/2.2);if(t>0){r+= (176-r)*t;gg+=(158-gg)*t;b+=(98-b)*t;}}
       if(surf==='clay'&&ay>HL-1.6&&ay<HL+1.6&&ax<4){const t=.12*(1-ax/4);r-=r*t;gg-=gg*t;b-=b*t;}
-      // lines
-      let line=false;
-      if(ax<=DW+hw&&Math.abs(ay-HL)<=hw*1.3)line=true;
-      else if(ay<=HL+hw&&(Math.abs(ax-DW)<=hw||Math.abs(ax-SW)<=hw))line=true;
-      else if(ax<=SW&&Math.abs(ay-SL)<=hw)line=true;
-      else if(Math.abs(x)<=hw&&(ay<=SL||ay>=HL-.3)&&ay<=HL)line=true;
-      if(line){r=Lc[0];gg=Lc[1];b=Lc[2];}
+      // soft daylight: nearer ground a touch brighter, far end hazier; slight edge darkening off court
+      const lf=.9+.1*clamp((17.6-y)/36,0,1);r*=lf;gg*=lf;b*=lf;
+      if(!inCourt){const e=Math.min(1,(Math.max(ax-DW,0)+Math.max(ay-HL,0))/7);r*=1-.1*e;gg*=1-.1*e;b*=1-.1*e;}
       // net shadow
       if(y>0&&y<.42&&ax<POST){r*=.84;gg*=.84;b*=.84;}
-      const n=(hash2(sx,sy)-.5)*nz*(line?.3:1);
+      const n=(hash2(sx,sy)-.5)*nz;
       const i=(sy*LW+sx)*4;D[i]=clamp(r+n,0,255);D[i+1]=clamp(gg+n,0,255);D[i+2]=clamp(b+n,0,255);D[i+3]=255;
     }
   }
   g.putImageData(img,0,0);
+  // court lines rasterised from the real line geometry, so every line is continuous
+  const Lcol=rgb(Lc),LS=[];
+  for(const sd of [-1,1]){LS.push([-DW-.05,sd*HL,DW+.05,sd*HL,.1],[-SW,sd*SL,SW,sd*SL,.07],[0,sd*HL,0,sd*(HL-.25),.07]);
+    LS.push([sd*DW,-HL,sd*DW,HL,.07],[sd*SW,-HL,sd*SW,HL,.07]);}
+  LS.push([0,-SL,0,SL,.07]);
+  for(const L of LS)rline(g,L[0],L[1],L[2],L[3],L[4],Lcol);
+  if(surf==='clay'){g.globalAlpha=.35;for(const L of LS)rline(g,L[0],L[1],L[2],L[3],L[4],rgb(C),.25);g.globalAlpha=1;}
+  // seated line judges beside the court
+  if(JUDGE)for(const jx of [-1,1])for(const jy of [-1,1]){const p=proj(jx*(DW+2.4),jy*(HL-1.6),0,{});const sp=JUDGE;g.drawImage(sp.c,Math.round(p.x-sp.ox),Math.round(p.y-sp.oy));}
   renderNet();
+}
+function rline(g,x1,y1,x2,y2,w,col,dust){
+  const a=proj(x1,y1,0,{}),b=proj(x2,y2,0,{}),hor=Math.abs(y2-y1)<.01;
+  const n=Math.ceil(Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y)))+1;g.fillStyle=col;
+  for(let i=0;i<=n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t,k=a.s+(b.s-a.s)*t;
+    if(dust&&hash2(i,Math.round(x*7))>dust)continue;
+    const tw=hor?1:Math.max(1,Math.round(k*w)),th=hor?Math.max(1,Math.round(k*w*.6)):1;
+    g.fillRect(Math.round(x-tw/2),Math.round(y-th/2),tw,th);}
 }
 function fillQuad(g,pts,c){g.beginPath();pts.forEach((q,i)=>{const p=proj(q[0],q[1],q[2]||0);i?g.lineTo(Math.round(p.x),Math.round(p.y)):g.moveTo(Math.round(p.x),Math.round(p.y));});g.closePath();g.fillStyle=c;g.fill();}
 function renderNet(){
@@ -483,7 +505,9 @@ function renderNet(){
       D[i]=c;D[i+1]=c+2;D[i+2]=c+6;D[i+3]=a;}
   }
   g.putImageData(img,0,0);
-  for(const x of [-POST,POST]){const a=proj(x,0,0,{}),b=proj(x,0,NETP+.06,{});prect(g,a.x-Math.max(1,a.s*.06),b.y,Math.max(2,a.s*.12),a.y-b.y,'#1b2b4a');}
+  {const a=proj(0,0,0,{}),b=proj(0,0,NETC,{});prect(g,a.x-Math.max(1,a.s*.03),b.y,Math.max(1,a.s*.06),a.y-b.y,'#f2f4f8');}
+  for(const x of [-POST,POST]){const a=proj(x,0,0,{}),b=proj(x,0,NETP+.06,{});const w=Math.max(2,Math.round(a.s*.12));
+    prect(g,a.x-w/2,b.y,w,a.y-b.y,'#24375e');prect(g,a.x-w/2,b.y,1,a.y-b.y,'#3d5788');prect(g,a.x-w/2-1,b.y-1,w+2,2,'#c9ced8');}
   // umpire chair
   const ux=DW+1.6;const f=proj(ux,0,0,{}),t=proj(ux,0,1.9,{});const k=f.s;
   prect(g,f.x-.32*k,t.y,1,f.y-t.y,'#d8d8d8');prect(g,f.x+.32*k,t.y,1,f.y-t.y,'#d8d8d8');
@@ -576,11 +600,13 @@ function buildSet(ch,H,front,noRacket){
   set.toss=drawPose(H,ch,front,{kind:'toss',u:0});
   return set;
 }
-let UMP=null,KID=null;
+let UMP=null,KID=null,JUDGE=null;
 function buildCrew(){
   const k=proj(DW+1.6,0,1.9).s;
   UMP={idle:drawPose(Math.max(10,Math.round(1.25*k)),{shirt:'#1d3b8f',shorts:'#1d3b8f',hair:'#5a4632',skin:'#f1c9a5',band:'#ffffff'},true,{kind:'idle'},true)};
   const k2=proj(POST,0,0).s;
+  const k3=proj(DW+2.3,0,0).s;
+  JUDGE=drawPose(Math.max(9,Math.round(1.25*k3)),{shirt:'#1d3b8f',shorts:'#d8d2c0',hair:'#3a2a1a',skin:'#e8bd98',band:'#1d3b8f'},true,{kind:'crouch'},true);
   KID={crouch:drawPose(Math.max(9,Math.round(1.2*k2)),{shirt:'#2f8f5b',shorts:'#1c2a4a',hair:'#3a2a1a',skin:'#e0ad85',band:'#2f8f5b'},true,{kind:'crouch'},true)};
 }
 function buildPlayerSprites(){
@@ -687,7 +713,7 @@ function solveShot(b,tx,ty,T,g,margin){
 }
 
 /* ================= hitting ================= */
-function reachOf(p){return (p.ai?1.25:1.55)+p.ch.spd*.28;}
+function reachOf(p){return (p.ai?1.25:1.7)+p.ch.spd*.28;}
 function handFor(p){const b=S.ball;let bx=b.x;
   if(!b.held&&b.vy*p.side>0){const tc=clamp((p.y-b.y)/b.vy,0,1.2);bx=b.x+b.vx*tc;}
   const rel=bx-p.x;return (p.side<0?rel>=0:rel<=0)?1:-1;}
@@ -698,7 +724,7 @@ function press(p,type){
   if(S.state!=='rally')return;
   let err=-.5;
   if(b.lastHitter!==p.side&&b.vy*p.side>0){const tc=(p.y-p.side*.3-b.y)/b.vy;err=clamp((tc-.12)/.42,-1,1);}
-  p.armed={type,t:.8,err};p.hand=handFor(p);p.swing=-1;
+  p.armed={type,t:1.1,err};p.hand=handFor(p);p.swing=-1;
   if(canHit(p)){doHit(p,type,err);p.armed=null;}
 }
 function humanPress(type){if(!S||S.over)return;press(S.players[0],type);}
@@ -706,7 +732,7 @@ function canHit(p){
   const b=S.ball;
   if(b.held||b.lastHitter===p.side||b.bounces>=2||(b.serve&&b.bounces===0))return false;
   const rel=(b.y-p.y)*p.side;
-  if(rel<-.45||rel>(p.ai?1.1:1.7))return false;
+  if(rel<(p.ai?-.45:-.75)||rel>(p.ai?1.1:2.0))return false;
   if(Math.abs(b.x-p.x)>reachOf(p))return false;
   if(b.z>3.3||b.z<.04)return false;
   return true;
@@ -1100,7 +1126,7 @@ function mkEntry(name,cc,rank,style,sex){
   const key={S:'srv',P:'pow',F:'spd',C:'ctl'}[style];
   if(key){st[key]=Math.min(.99,st[key]+.2);for(const k in st)if(k!==key)st[k]-=.04;}else for(const k in st)st[k]+=.06;
   return {name,short:lastName(parts),cc,rank,style,sex,s,rating:2250-230*Math.log(rank),
-    look:{shirt:SHIRTS[h%SHIRTS.length],shorts:['#ffffff','#1d3b8f','#111111','#eef2f6'][(h>>4)%4],hair:HAIRS[(h>>8)%HAIRS.length],skin:SKINS[(h>>12)%SKINS.length],band:SHIRTS[(h>>16)%SHIRTS.length],long:sex==='w'?1:0},
+    look:{shirt:SHIRTS[h%SHIRTS.length],shorts:['#ffffff','#1d3b8f','#111111','#eef2f6'][(h>>>4)%4],hair:HAIRS[(h>>>8)%HAIRS.length],skin:SKINS[(h>>>12)%SKINS.length],band:SHIRTS[(h>>>16)%SHIRTS.length],long:sex==='w'?1:0},
     ...st};
 }
 function roster(sex){
@@ -1111,6 +1137,7 @@ function roster(sex){
   return src;
 }
 function seedOrder(n){let a=[1];while(a.length<n){const m=a.length*2+1,b=[];for(const x of a)b.push(x,m-x);a=b;}return a;}
+function oppLvl(e){return clamp(CFG.level-1.2+e.s*1.3,1,4);}
 function chFromEntry(e){return {name:e.name,short:e.short,spd:e.spd,pow:e.pow,ctl:e.ctl,srv:e.srv,net:e.style==='A'&&e.s>.6?1:0,...e.look};}
 let TOUR=null;
 function newTour(){
@@ -1157,7 +1184,7 @@ function showDraw(){
 }
 function playTourRound(){
   const sl=SLAMS[TOUR.slam],opp=TOUR.slots[myPos()^1];
-  playMatch({mode:'play',meCh:CHARS[TOUR.meIdx],oppCh:chFromEntry(opp),oppLevel:CFG.level-1+opp.s*2,surface:sl.surf,sets:CFG.sets,games:CFG.games,tiebreak:CFG.tiebreak,
+  playMatch({mode:'play',meCh:CHARS[TOUR.meIdx],oppCh:chFromEntry(opp),oppLevel:oppLvl(opp),surface:sl.surf,sets:CFG.sets,games:CFG.games,tiebreak:CFG.tiebreak,
     speed:CFG.speed,first:CFG.first,tourName:sl.name,round:TOUR.round});
 }
 
@@ -1166,14 +1193,24 @@ const screens=['sTitle','sSetup','sHelp','sPause','sEnd','sSettings','sDraw'];
 let helpReturn='sTitle';
 function show(id){for(const s of screens)$('#'+s).hidden=s!==id;}
 function startDemo(){
-  const a=(Math.random()*8)|0;let b=(Math.random()*7)|0;if(b>=a)b++;
+  const L=realList(Math.random()<.5?'m':'w'),a=(Math.random()*20)|0;let b=(Math.random()*19)|0;if(b>=a)b++;
   const surf=['hard','clay','grass','ao'][(Math.random()*4)|0];
-  startMatch({mode:'demo',meCh:CHARS[a],oppCh:CHARS[b],oppLevel:3,surface:surf,sets:1,games:6,tiebreak:1,speed:0,first:'rnd'});
+  startMatch({mode:'demo',meCh:chFromEntry(L[a]),oppCh:chFromEntry(L[b]),oppLevel:3,surface:surf,sets:1,games:6,tiebreak:1,speed:0,first:'rnd'});
   $('#hud').hidden=true;$('#touch').hidden=true;paused=false;
 }
 let setupMode='exhib';
 function openSetup(mode){setupMode=mode;$('#setupTitle').textContent=mode==='tour'?'Grand Slam':'Opvisning';
-  $('#oppCard').hidden=mode==='tour';$('#tourCard').hidden=mode!=='tour';$('#sexCard').hidden=mode!=='tour';buildSetup();show('sSetup');}
+  $('#oppCard').hidden=mode==='tour';$('#exCard').hidden=mode==='tour';$('#meCard').hidden=mode!=='tour';$('#tourCard').hidden=mode!=='tour';
+  $('#sexCard').hidden=false;  $('#sexH').textContent=mode==='tour'?'TURNERING FOR':'SPIL MED';buildSetup();show('sSetup');}
+const REAL={};
+function realList(sex){if(!REAL[sex])REAL[sex]=(sex==='m'?ATP:WTA).split(';').map((r,i)=>{const [n,c,st]=r.split('|');return mkEntry(n,c,i+1,st,sex);});return REAL[sex];}
+function fillPlist(el,list,sel,disabled,onPick,withRandom){
+  const top=el.scrollTop;el.innerHTML='';
+  if(withRandom){const b=document.createElement('button');b.className='pr'+(sel<0?' sel':'');b.innerHTML='<span class="rk">?</span><b>Tilfældig modstander</b><i></i>';b.onclick=()=>onPick(-1);el.appendChild(b);}
+  list.forEach((e,i)=>{const b=document.createElement('button');b.className='pr'+(sel===i?' sel':'');b.disabled=i===disabled;
+    b.innerHTML='<span class="rk">'+e.rank+'</span><b>'+e.name+'</b><i>'+e.cc+' · '+STYLE[e.style]+'</i>';b.onclick=()=>onPick(i);el.appendChild(b);});
+  el.scrollTop=top;
+}
 function charCanvas(ch,H){const spr=drawPose(H,ch,true,{kind:'idle'});const c=document.createElement('canvas');c.width=spr.c.width;c.height=spr.c.height;c.getContext('2d').drawImage(spr.c,0,0);return c;}
 function charCard(i,sel,onPick){
   const d=document.createElement('button');d.className='ch'+(sel?' sel':'');
@@ -1201,9 +1238,9 @@ function buildSettings(){
 }
 function buildSetup(){
   const me=$('#cMe');me.innerHTML='';
+  const ss=$('#sexSeg');ss.innerHTML='';
+  for(const [v,t] of [['m','Herrer (ATP)'],['w','Damer (WTA)']]){const b=document.createElement('button');b.textContent=t;if(CFG.sex===v)b.className='on';b.onclick=()=>{CFG.sex=v;save();buildSetup();};ss.appendChild(b);}
   if(setupMode==='tour'){
-    const ss=$('#sexSeg');ss.innerHTML='';
-    for(const [v,t] of [['m','Herrer (ATP)'],['w','Damer (WTA)']]){const b=document.createElement('button');b.textContent=t;if(CFG.sex===v)b.className='on';b.onclick=()=>{CFG.sex=v;save();buildSetup();};ss.appendChild(b);}
     CHARS.forEach((c,i)=>{if(c.sex!==CFG.sex)return;const key=CFG.sex==='m'?'meM':'meW';me.appendChild(charCard(i,CFG[key]===i,()=>{CFG[key]=i;save();buildSetup();}));});
     $('#rankPts').textContent=PROG.pts[CFG.sex]+' POINT';
     const tl=$('#tourList');tl.innerHTML='';
@@ -1213,9 +1250,10 @@ function buildSetup(){
     $('#setupNote').textContent='128 spillere: top 64 fra '+(CFG.sex==='m'?'ATP':'WTA')+'-ranglisten (19. okt. 2026) og 64 kvalifikanter. 7 runder til titlen. Kampformat fra Indstillinger: '+CFG.sets+' sæt, '+CFG.games+' partier.';
     $('#bStart').firstChild.textContent='Til lodtrækningen ';
   }else{
-    CHARS.forEach((c,i)=>me.appendChild(charCard(i,CFG.me===i,()=>{CFG.me=i;if(CFG.opp===i)CFG.opp=-1;save();buildSetup();})));
-    const op=$('#cOpp');op.innerHTML='';op.appendChild(charCard(-1,CFG.opp<0,()=>{CFG.opp=-1;save();buildSetup();}));
-    CHARS.forEach((c,i)=>{if(i!==CFG.me)op.appendChild(charCard(i,CFG.opp===i,()=>{CFG.opp=i;save();buildSetup();}));});
+    const sx=CFG.sex,L=realList(sx);
+    fillPlist($('#pMe'),L,CFG.exMe[sx],-1,i=>{CFG.exMe[sx]=i;if(CFG.exOpp[sx]===i)CFG.exOpp[sx]=-1;save();buildSetup();},false);
+    fillPlist($('#pOpp'),L,CFG.exOpp[sx],CFG.exMe[sx],i=>{CFG.exOpp[sx]=i;save();buildSetup();},true);
+    $('#exMeH').textContent='DU SPILLER SOM · '+(sx==='m'?'ATP':'WTA')+' TOP 64';
     $('#setupNote').textContent=SURF[CFG.surface].name+' · '+['','Let','Normal','Svær','Pro'][CFG.level]+' · '+(CFG.sets===1?'1 sæt':'bedst af '+CFG.sets)+' · '+CFG.games+' partier. Ændres under Indstillinger.';
     $('#bStart').firstChild.textContent='Start kamp ';
   }
@@ -1223,8 +1261,10 @@ function buildSetup(){
 function launch(){
   if(setupMode==='tour'){newTour();showDraw();return;}
   TOUR=null;
-  let opp=CFG.opp;if(opp<0||opp===CFG.me){opp=(Math.random()*7)|0;if(opp>=CFG.me)opp++;}
-  playMatch({mode:'play',meCh:CHARS[CFG.me],oppCh:CHARS[opp],oppLevel:CFG.level,surface:CFG.surface,sets:CFG.sets,games:CFG.games,tiebreak:CFG.tiebreak,speed:CFG.speed,first:CFG.first});
+  const sx=CFG.sex,L=realList(sx),mi=clamp(CFG.exMe[sx]|0,0,63);
+  let oi=CFG.exOpp[sx];if(oi<0||oi===mi){oi=(Math.random()*63)|0;if(oi>=mi)oi++;}
+  const oe=L[oi];
+  playMatch({mode:'play',meCh:chFromEntry(L[mi]),oppCh:chFromEntry(oe),oppLevel:oppLvl(oe),surface:CFG.surface,sets:CFG.sets,games:CFG.games,tiebreak:CFG.tiebreak,speed:CFG.speed,first:CFG.first});
 }
 function playMatch(o){
   show(null);$('#hud').hidden=false;
