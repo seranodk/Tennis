@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.8)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.9)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v2.8</title>
+<title>Tennis v2.9</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -280,12 +280,12 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
       <h2>Styring</h2>
       <div class="card"><h3>SLAG</h3>
         <div class="keys">
-          <kbd>B</kbd><span><b>Hårdt slag</b> – hold knappen nede for mere fart (og større risiko for ude). Hård serv.</span>
+          <kbd>B</kbd><span><b>Hårdt slag</b> – tryk for at føre ketsjeren tilbage, slip for at slå. Jo længere du holder, jo hårdere (og større risiko for ude). Hård serv.</span>
           <kbd>Y</kbd><span><b>Lob</b> – højt over modstanderen ved nettet. Sikker kick-serv.</span>
         </div>
       </div>
-      <div class="card"><h3>SIGTE</h3>
-        <p>Hold retning mens du slår: venstre/højre sender bolden mod siden, op slår dybt, ned slår kort. Slår du tidligt, trækker bolden på tværs; slår du sent, går den den anden vej. Trykker du lidt for tidligt, venter spilleren med ketsjeren tilbage og slår når bolden kommer.</p>
+      <div class="card"><h3>SIGTE OG TIMING</h3>
+        <p>Slaget går af når du slipper knappen. Slip lige før bolden når dig: rammer du rent, går bolden hvor du sigter. Slipper du for tidligt, trækkes bolden på tværs og kan gå ud; for sent, skubbes den den anden vej eller i nettet; alt for tidligt og du svinger forbi. Hold retning mens du slår: venstre/højre mod siden, op dybt, ned kort.</p>
       </div>
       <div class="card"><h3>SERV</h3>
         <p>Du server fra baglinjen over i feltet på skrå. Flyt dig langs baglinjen, og tryk en slagknap for at kaste bolden op. Mens bolden er i luften styrer du den gule markering i feltet; tryk igen for at serve. Ramt nær toppen af kastet og uden at gå efter linjerne går langt de fleste server ind.</p>
@@ -334,7 +334,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.8';
+const VERSION='v2.9';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -405,7 +405,7 @@ const _p={x:0,y:0,s:0};
 function proj(x,y,z,o){o=o||_p;const dy=y-camY,dz=z-camZ;const d=dy*CP-dz*SP;const u=dy*SP+dz*CP;const k=F/d;o.x=OX+x*k;o.y=OY-u*k;o.s=k;return o;}
 /* Camera like Super Tennis: fixed angle with mild perspective, zoomed so the court fills the width;
    when the whole length doesn't fit, the view scrolls up and down after the ball. */
-const VIEW={ry:0,rh:1,range:0,s:0};let BH=1;
+const VIEW={ry:0,rh:1,range:0,s:0,rx:0,rw:1,rangeX:0,sx:0};let BH=1,BW=1;
 function bounds(X){F=1;OX=0;OY=0;const pts=[[-X,-HL-1.6,0],[X,-HL-1.6,0],[-X,HL+1.2,0],[X,HL+1.2,0],[0,HL+.8,2.3]];
   let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const q of pts){proj(q[0],q[1],q[2]);a=Math.min(a,_p.x);b=Math.max(b,_p.x);c=Math.min(c,_p.y);d=Math.max(d,_p.y);}return [a,b,c,d];}
 function fit(rx,ry,rw,rh,tall){
@@ -413,11 +413,19 @@ function fit(rx,ry,rw,rh,tall){
   if(tall){for(let deg=20;deg<=36;deg++){setCam(deg);const [a,b,c,d]=bounds(X);const f=Math.min(rw/(b-a),rh/(d-c))*(1-.004*Math.abs(deg-23));if(f>bf){bf=f;best=deg;}}}
   setCam(best);
   const [a,b,c,d]=bounds(X);const Fw=rw/(b-a),Fh=rh/(d-c);
-  F=tall?Math.min(Fw,Fh):Math.min(Fw,Fh/.8);
-  OX=rx+rw/2-F*(a+b)/2;
+  F=Math.min(Fw*1.14,tall?Fh:Fh/.8);   // a touch wider than the screen: the view pans sideways like the SNES camera
+  const fullW=F*(b-a);VIEW.rx=rx;VIEW.rw=rw;VIEW.rangeX=Math.max(0,Math.ceil(fullW-rw));
+  OX=VIEW.rangeX>0?rx-F*a:rx+rw/2-F*(a+b)/2;VIEW.sx=VIEW.rangeX/2;
   const full=F*(d-c);VIEW.ry=ry;VIEW.rh=rh;VIEW.range=Math.max(0,Math.ceil(full-rh));
   OY=VIEW.range>0?ry-F*c:ry+(rh-full)/2-F*c;
   VIEW.s=VIEW.range;   // start looking at the near half
+}
+function camTargetX(){
+  if(!S||VIEW.rangeX<=0)return 0;
+  const b=S.ball,me=S.players[0];
+  let t=proj(b.x,b.y,0).x-(VIEW.rx+VIEW.rw/2);
+  const mx=proj(me.x,me.y,0).x;t=clamp(t,mx+14-(VIEW.rx+VIEW.rw),mx-14-VIEW.rx);   // your player stays on screen
+  return clamp(t,0,VIEW.rangeX);
 }
 function camTarget(){
   if(!S||VIEW.range<=0)return 0;
@@ -451,7 +459,7 @@ function resize(){
   }else layoutMode='full';
   const tall=ch>cw*1.1;
   fit(rx*q,ry*q,rw*q,Math.max(60,rh)*q,tall);
-  BH=LH+VIEW.range+2;bg.height=nt.height=BH;
+  BH=LH+VIEW.range+2;BW=LW+VIEW.rangeX+2;bg.height=nt.height=BH;bg.width=nt.width=BW;
   placeTouch(cw,ch,ins);
   buildCrew();
   renderStatic();
@@ -477,17 +485,17 @@ const ADS=['TENNIS','ACE','DEUCE','16-BIT','SMASH','LOB','GAME SET'];
 function renderStatic(){
   const g=bgx, s=SURF[S?S.surface:'hard'];
   g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
-  g.fillStyle='#070b1f';g.fillRect(0,0,LW,BH);
+  g.fillStyle='#070b1f';g.fillRect(0,0,BW,BH);
   seed=11;
   // far stands: crisp horizontal tiers
   for(let r=22;r>=0;r--){
     const y0=17.6+r*.9, z0=1.9+r*.72;
     const top=Math.round(proj(0,y0+.9,z0+.72).y), bot=Math.round(proj(0,y0,z0).y);
-    prect(g,0,top,LW,Math.max(1,bot-top),r%2?'#1d2856':'#18214a');
-    prect(g,0,bot-1,LW,1,'#121a3c');
+    prect(g,0,top,BW,Math.max(1,bot-top),r%2?'#1d2856':'#18214a');
+    prect(g,0,bot-1,BW,1,'#121a3c');
     const k=proj(0,y0+.45,z0+.3).s, w=Math.max(1,Math.round(k*.34)), hh=Math.max(1,Math.round(k*.28));
     for(let x=-34;x<34;x+=.55){if(srand()<.08)continue;const p=proj(x+srand()*.2,y0+.45,z0+.35);
-      const px=Math.round(p.x), py=Math.round(p.y);if(px<-4||px>LW+4)continue;
+      const px=Math.round(p.x), py=Math.round(p.y);if(px<-4||px>BW+4)continue;
       prect(g,px-w/2,py-hh*.2,w,hh*1.4,CROWD[(srand()*CROWD.length)|0]);
       prect(g,px-Math.max(1,w*.7)/2,py-hh*1.1,Math.max(1,w*.7),Math.max(1,hh*.8),SKINS[(srand()*SKINS.length)|0]);}
   }
@@ -502,20 +510,20 @@ function renderStatic(){
     fillQuad(g,[[sd*12.6,-34,0],[sd*12.6,17.6,0],[sd*12.6,17.6,1.4],[sd*12.6,-34,1.4]],'#0f3d2b');
   }
   // back wall with ad boards
-  {const top=Math.round(proj(0,17.6,1.9).y),bot=Math.round(proj(0,17.6,0).y);prect(g,0,top,LW,bot-top,'#0f3d2b');
-   prect(g,0,top,LW,1,'#0a2a1e');
+  {const top=Math.round(proj(0,17.6,1.9).y),bot=Math.round(proj(0,17.6,0).y);prect(g,0,top,BW,bot-top,'#0f3d2b');
+   prect(g,0,top,BW,1,'#0a2a1e');
    let i=0;for(let x=-16;x<16;x+=4.4,i++){const a=proj(x+.25,17.55,1.5),b=proj(x+4.15,17.55,.3);
      const c=i%3===0?'#1b5a8a':i%3===1?'#7a1d2c':'#145c40';prect(g,a.x,a.y,b.x-a.x,b.y-a.y,c);
      const fh=Math.max(5,Math.round((b.y-a.y)*.62));g.font='700 '+fh+'px Silkscreen, monospace';g.textAlign='center';g.textBaseline='middle';
      g.fillStyle='#f4f1e6';g.fillText(ADS[i%ADS.length],Math.round((a.x+b.x)/2),Math.round((a.y+b.y)/2)+1);}}
   // mode-7 ground
-  const img=g.getImageData(0,0,LW,BH), D=img.data;
+  const img=g.getImageData(0,0,BW,BH), D=img.data;
   const C=s.court,A=s.alt,O=s.out,O2=s.out2,Lc=s.line,nz=s.noise, surf=S?S.surface:'hard';
   for(let sy=0;sy<BH;sy++){
     const v=(OY-(sy+.5))/F;const den=v*CP-SP;if(den>=0)continue;
     const dy=-camZ*(CP+v*SP)/den;if(dy<=0)continue;const y=camY+dy;if(y>17.6||y<-36)continue;
     const d=dy*CP+camZ*SP;const mpp=d/F;const lw=Math.max(.06,mpp*.92),hw=lw/2;
-    for(let sx=0;sx<LW;sx++){
+    for(let sx=0;sx<BW;sx++){
       const x=(sx+.5-OX)*d/F;if(x<-12.6||x>12.6)continue;
       let col;const ax=Math.abs(x),ay=Math.abs(y);
       const inCourt=ax<=DW&&ay<=HL;
@@ -536,7 +544,7 @@ function renderStatic(){
       // net shadow
       if(y>0&&y<.42&&ax<POST){r*=.84;gg*=.84;b*=.84;}
       const hh=hash2(sx,sy);const n=(surf==='grass'?(hh<.33?-1:hh>.8?.7:0):(hh-.5))*nz;
-      const i=(sy*LW+sx)*4;D[i]=clamp(r+n,0,255);D[i+1]=clamp(gg+n,0,255);D[i+2]=clamp(b+n,0,255);D[i+3]=255;
+      const i=(sy*BW+sx)*4;D[i]=clamp(r+n,0,255);D[i+1]=clamp(gg+n,0,255);D[i+2]=clamp(b+n,0,255);D[i+3]=255;
     }
   }
   g.putImageData(img,0,0);
@@ -560,13 +568,13 @@ function rline(g,x1,y1,x2,y2,w,col,dust){
 }
 function fillQuad(g,pts,c){g.beginPath();pts.forEach((q,i)=>{const p=proj(q[0],q[1],q[2]||0);i?g.lineTo(Math.round(p.x),Math.round(p.y)):g.moveTo(Math.round(p.x),Math.round(p.y));});g.closePath();g.fillStyle=c;g.fill();}
 function renderNet(){
-  const g=ntx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,LW,BH);
-  const img=g.createImageData(LW,BH),D=img.data;
+  const g=ntx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,BW,BH);
+  const img=g.createImageData(BW,BH),D=img.data;
   const pa=proj(-POST,0,0,{}),pb=proj(POST,0,0,{});
   for(let sx=Math.floor(pa.x);sx<=Math.ceil(pb.x);sx++){
     const k=proj(0,0,.5).s;const x=(sx+.5-OX)/k;if(Math.abs(x)>POST)continue;
     const top=Math.round(proj(x,0,netH(x)).y), bot=Math.round(proj(x,0,0).y);
-    for(let sy=top;sy<bot;sy++){if(sy<0||sy>=BH)continue;const i=(sy*LW+sx)*4;
+    for(let sy=top;sy<bot;sy++){if(sy<0||sy>=BH)continue;const i=(sy*BW+sx)*4;
       let a=215,c=48;const band=Math.max(2,Math.round(k*.09));if(sy-top<band){c=sy-top===band-1?190:246;a=255;}else if((sx&1)===0&&(sy&1)===0){c=150;a=235;}
       D[i]=c;D[i+1]=c+2;D[i+2]=c+6;D[i+3]=a;}
   }
@@ -720,7 +728,7 @@ function setupPoint(snap){
   sv.spot={x:-sv.side*S.sideSign*1.2,y:sv.side*(HL+.3)};
   const box=sv.side*S.sideSign;
   rc.spot={x:box*2.7,y:rc.side*(HL+.9)};
-  for(const p of S.players){p.armed=null;p.plan=null;p.react=0;p.swing=-1;p.anim=null;p.atNet=false;p.assistPlan=null;p.aiT=0;if(snap){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}}
+  for(const p of S.players){p.armed=null;p.charge=null;p.plan=null;p.react=0;p.swing=-1;p.anim=null;p.atNet=false;p.assistPlan=null;p.aiT=0;if(snap){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}}
   S.ball=newBall();S.state='serve_ready';S.timer=0;updateBoard();
 }
 
@@ -737,7 +745,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyP'||e.code==='Escape'){if(S&&S.mode==='play'&&!S.over){paused?resume():pause();}}
   if(e.code==='KeyF')toggleFs();
 });
-addEventListener('keyup',e=>{keys.delete(e.code);const sh=KEYMAP[e.code];if(sh)held[sh]=Math.max(0,held[sh]-1);});
+addEventListener('keyup',e=>{keys.delete(e.code);const sh=KEYMAP[e.code];if(sh){held[sh]=Math.max(0,held[sh]-1);if(!held[sh]&&S&&S.mode==='play'&&!paused)humanRelease(sh);}});
 addEventListener('blur',()=>{keys.clear();held.flat=held.lob=0;});
 function keyAxes(){const l=keys.has('ArrowLeft')||keys.has('KeyA'),r=keys.has('ArrowRight')||keys.has('KeyD'),u=keys.has('ArrowUp')||keys.has('KeyW'),d=keys.has('ArrowDown')||keys.has('KeyS');
   inp.kx=(r?1:0)-(l?1:0);inp.ky=(u?1:0)-(d?1:0);}
@@ -754,7 +762,7 @@ function moveStick(e){const r=zone.getBoundingClientRect();let dx=e.clientX-r.le
   let mx=dx/RAD,my=-dy/RAD;const m=Math.hypot(mx,my);if(m<.14){mx=my=0;}else{const s=Math.min(1,(m-.14)/.6)/m;mx*=s;my*=s;}inp.tx=mx;inp.ty=my;}
 document.querySelectorAll('.sb').forEach(bt=>{
   bt.addEventListener('pointerdown',e=>{e.preventDefault();isTouch=true;bt.classList.add('on');held[bt.dataset.shot]=1;if(S&&S.mode==='play'&&!paused){readAxes();humanPress(bt.dataset.shot);}});
-  const off=()=>{bt.classList.remove('on');held[bt.dataset.shot]=0;};bt.addEventListener('pointerup',off);bt.addEventListener('pointercancel',off);bt.addEventListener('pointerleave',off);
+  const off=()=>{const was=held[bt.dataset.shot];bt.classList.remove('on');held[bt.dataset.shot]=0;if(was&&S&&S.mode==='play'&&!paused)humanRelease(bt.dataset.shot);};bt.addEventListener('pointerup',off);bt.addEventListener('pointercancel',off);bt.addEventListener('pointerleave',off);
 });
 const gpPrev=[];const GPMAP={0:'flat',1:'flat',2:'lob',3:'lob'};
 function pollPad(){inp.gx=inp.gy=0;const pads=navigator.getGamepads?navigator.getGamepads():[];for(const gp of pads){if(!gp)continue;
@@ -762,6 +770,7 @@ function pollPad(){inp.gx=inp.gy=0;const pads=navigator.getGamepads?navigator.ge
   const bt=i=>gp.buttons[i]&&gp.buttons[i].pressed;
   if(bt(14))ax=-1;if(bt(15))ax=1;if(bt(12))ay=1;if(bt(13))ay=-1;inp.gx=ax;inp.gy=ay;
   for(const i of [0,1,2,3,9]){const now=!!bt(i),was=!!gpPrev[gp.index*20+i];gpPrev[gp.index*20+i]=now;
+    if(!now&&was&&i!==9&&S&&S.mode==='play'&&!paused)humanRelease(GPMAP[i]);
     if(now&&!was){if(i===9){if(S&&S.mode==='play'&&!S.over)paused?resume():pause();}else if(S&&S.mode==='play'&&!paused){readAxes();humanPress(GPMAP[i]);}}}
   break;}}
 function readAxes(){keyAxes();let x=inp.kx||inp.gx||inp.tx,y=inp.ky||inp.gy||inp.ty;const m=Math.hypot(x,y);if(m>1){x/=m;y/=m;}inp.x=x;inp.y=y;}
@@ -817,18 +826,29 @@ function press(p,type){
   p.armed={type,t:1.3,err,hold:0};p.hand=handFor(p);p.anim=null;
   if(canHit(p)){doHit(p,type,err);p.armed=null;}
 }
-function humanPress(type){if(!S||S.over)return;press(S.players[0],type);}
+function humanPress(type){if(!S||S.over)return;const p=S.players[0];
+  if(S.state==='rally'){p.charge={type,t:0};p.armed=null;p.hand=handFor(p);p.anim=null;return;}   // take the racket back
+  press(p,type);}
+function humanRelease(type){if(!S||S.over)return;const p=S.players[0];if(p.charge&&p.charge.type===type)swingNow(p);}
+/* the swing starts when you let go; the ball must meet the racket inside the swing.
+   swing too early -> ball pulled across, too late -> pushed the other way / into the net, way off -> miss */
+function swingNow(p){const c=p.charge;p.charge=null;if(S.state!=='rally')return;
+  p.hand=handFor(p);p.armed={type:c.type,t:.3,age:0,hold:c.t,swing:true};startAnim(p,p.hand>0?'fh':'bh',1,.42);tryContact(p);}
+function tryContact(p){
+  const a=p.armed;if(!a||!canHit(p))return;const b=S.ball,rel=(b.y-p.y)*p.side;
+  const err=a.age>.03?clamp((a.age-.1)/.16,-1,1):-clamp(.2+rel*.9,0,1);
+  doHit(p,a.type,err,a.hold,true);p.armed=null;}
 function canHit(p){
   const b=S.ball;
   if(b.held||b.lastHitter===p.side||b.bounces>=2||(b.serve&&b.bounces===0))return false;
   const rel=(b.y-p.y)*p.side;
-  if(rel<(p.ai?-.35:-.55)||rel>(p.ai?.55:1.45))return false;
+  if(rel<(p.ai?-.35:-.5)||rel>(p.ai?.55:1.0))return false;
   if(Math.abs(b.x-p.x)>reachOf(p))return false;
   if(b.z>3.3||b.z<.04)return false;
   return true;
 }
 function startAnim(p,kind,from,dur){p.anim={kind,from,t:0,dur};p.swing=0;}
-function doHit(p,type,err,hold){
+function doHit(p,type,err,hold,fromSwing){
   const b=S.ball,ch=p.ch,opp=S.players[p.side<0?1:0];
   const volley=b.bounces===0;
   if(b.z>2.25)type='smash';
@@ -846,14 +866,14 @@ function doHit(p,type,err,hold){
     if(volley&&ay<-.3)depth=3.2;
   }
   // power: human = how long the button was held (0-0.7 s); computer varies its pace
-  const pw=p.ai?clamp(Math.random()*.5*(1-stretch),0,1):clamp((hold||0)/.7,0,1);
+  const pw=p.ai?clamp(Math.random()*.5*(1-stretch),0,1):clamp(((hold||0)-.12)/.6,0,1);
   const pull=err*1.5*(p.hand>0?1:-1)*(p.side<0?-1:1);
-  tx+=pull*(p.ai?.6:.35);
+  tx+=pull*(p.ai?.6:1.7);if(!p.ai&&err>0)depth+=err*1.1;
   const sweet=Math.abs(err)<.2&&stretch<.75;
   let sig=(.22+(1-ch.ctl)*.55+stretch*.45+Math.abs(err)*.12)*sh.sc*(p.ai?p.L.sc:.62)*(1+pw*.75);
   tx+=gauss()*sig*.9;depth+=gauss()*sig*.8+pw*.6;
   // a safe hit stays inside; a hard hit is allowed to drift over the lines
-  if(!p.ai&&Math.abs(err)<.85&&stretch<.92){const ox=pw*pw*.9,od=pw*pw*1.3;tx=clamp(tx,-(SW-.3+ox),SW-.3+ox);depth=clamp(depth,1.5,HL-.4+od);}
+  if(!p.ai&&Math.abs(err)<.35&&stretch<.92){const ox=pw*pw*.9,od=pw*pw*1.3;tx=clamp(tx,-(SW-.3+ox),SW-.3+ox);depth=clamp(depth,1.5,HL-.4+od);}
   let netErr=false;
   if(p.ai){ // unforced errors: more when stretched, on fast balls and in long rallies
     const inc=Math.hypot(b.vx,b.vy);
@@ -869,10 +889,10 @@ function doHit(p,type,err,hold){
   let T=sh.T*Math.pow(d/22,.75)*(1.1-.2*ch.pow)*(sweet?.9:1)*(volley&&type!=='smash'?.92:1)*(1-.27*pw);
   if(stretch>.85)T*=1.12;
   T=Math.max(.38,T);
-  const v=solveShot(b,tx,ty,T,sh.g,sh.m*(type==='lob'?1:(.8+Math.random()*.5))*(1-pw*.45));
+  const v=solveShot(b,tx,ty,T,sh.g,sh.m*(type==='lob'?1:(.8+Math.random()*.5))*(1-pw*.45)*(p.ai?1:1-Math.max(0,-err)*.75));
   if(netErr){const tn=-b.y/v[1];if(tn>0){const xn=b.x+v[0]*tn;v[2]=(netH(xn)-.18-b.z+.5*sh.g*tn*tn)/tn;}}
   b.vx=v[0];b.vy=v[1];b.vz=v[2];b.g=sh.g;b.ax=0;b.spin=type==='smash'?'flat':type;b.bounces=0;b.lastHitter=p.side;b.serve=false;b.netcord=false;b.netHit=false;
-  if(type==='smash')startAnim(p,'sv',4,.4);else startAnim(p,p.hand>0?'fh':'bh',2,.36);
+  if(type==='smash')startAnim(p,'sv',4,.4);else if(!fromSwing)startAnim(p,p.hand>0?'fh':'bh',2,.36);
   S.rally++;
   for(const q of S.players){q.plan=null;q.react=0;q.assistPlan=null;}
   if(p.ai&&!p.atNet&&(p.ch.net?.35:0)+p.L.net>Math.random()&&depth>HL-3&&type!=='lob')p.atNet=true;
@@ -978,7 +998,7 @@ function steer(p,dvx,dvy,dt){const k=Math.min(1,dt*38);p.vx+=(dvx-p.vx)*k;p.vy+=
 function aiUpdate(p,dt){
   const b=S.ball,L=p.L,opp=S.players[p.side<0?1:0];
   if(S.state==='serve_ready'||S.state==='toss'){
-    moveTo(p,p.spot.x,p.spot.y,dt,.9);
+    moveTo(p,p.spot.x,p.spot.y,dt,.5);
     if(S.players[S.server]===p){
       if(S.state==='serve_ready'&&arrived(p)&&(S.bounceT||0)>1.35)toss(p);
       if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random();press(p,S.serveNo===2?(r<.7?'lob':'flat'):(r<.8?'flat':'lob'));}
@@ -1007,11 +1027,11 @@ function aiUpdate(p,dt){
 function humanUpdate(p,dt){
   const b=S.ball,sp=moveSpeed(p);
   if(S.state==='serve_ready'&&S.players[S.server]===p){
-    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,1.3);return;}
+    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.5);return;}
     const sgn=-p.side*S.sideSign;const lo_=sgn>0?.15:-(SW-.4),hi=sgn>0?SW-.4:-.15;
     const nx=clamp(p.x+inp.x*sp*.5*dt,lo_,hi);p.vx=(nx-p.x)/dt;p.vy=0;p.x=nx;p.spot.x=nx;p.x-=p.vx*dt;return;
   }
-  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,1.3);return;}
+  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.5);return;}
   if(S.state==='toss'&&S.players[S.server]===p){steer(p,0,0,dt);
     // steer the landing spot inside the service box while the ball is in the air
     const box=p.side*S.sideSign,a=S.aim;if(a){a.x+=inp.x*7*dt;a.d+=inp.y*7*dt;
@@ -1048,8 +1068,13 @@ function update(dt){
     if(!p.ai&&p.armed&&!p.armed.serve&&S.state==='rally'&&b.lastHitter!==p.side&&b.vy*p.side>0){
       const tc=(p.y-b.y)/b.vy;if(tc>0&&tc<.28){const want=(b.x+b.vx*tc)-.78*p.hand*(p.side<0?1:-1);const d=clamp(want-p.x,-.35,.35);p.x+=d*Math.min(1,dt*5);}}
     if(p.flash>0)p.flash-=dt;
-    if(p.armed){
-      if(p.ai||!held[p.armed.type])p.armed.t-=dt;else p.armed.hold+=dt;   // holding the button keeps you ready and loads power
+    if(p.charge){p.charge.t+=dt;p.hand=handFor(p);
+      // holding on too long: the swing goes anyway once the ball is level with you (late)
+      if(S.state==='rally'&&b.lastHitter!==p.side&&!b.held&&(b.y-p.y)*p.side>.15&&Math.abs(b.x-p.x)<reachOf(p))swingNow(p);
+      if(S.state!=='rally'&&S.state!=='dead')p.charge=null;}
+    if(p.armed&&p.armed.swing){p.armed.age+=dt;tryContact(p);if(p.armed&&p.armed.age>=p.armed.t)p.armed=null;}
+    else if(p.armed){
+      p.armed.t-=dt;
       if(p.armed.serve){
         if(S.state==='toss'&&b.z>(p.ai?1.8:1.0)){doServe(p,p.armed.type);p.armed=null;}
         else if(p.armed.t<=0)p.armed=null;
@@ -1160,8 +1185,9 @@ function updateBoard(){
 const tA={x:0,y:0,s:0},tB={x:0,y:0,s:0};
 function render(){
   const g=lx;g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
-  const sc=Math.round(VIEW.s);
-  g.drawImage(bg,0,-sc);g.translate(0,-sc);
+  const sc=Math.round(VIEW.s),sx=Math.round(VIEW.sx);
+  g.fillStyle='#070b1f';g.fillRect(0,0,LW,LH);
+  g.drawImage(bg,-sx,-sc);g.translate(-sx,-sc);
   if(S.mode==='play')drawServeAim(g);
   const b=S.ball,far=[],near=[];
   for(const p of S.players)(p.y>=0?far:near).push(p);
@@ -1198,6 +1224,7 @@ function frameFor(p){
   const isSrv=S.players[S.server]===p;
   if(isSrv&&S.state==='toss')return b.vz>2.4?sp.sv[1]:b.vz>-1.2?sp.sv[2]:sp.sv[3];
   if(isSrv&&S.state==='serve_ready'&&arrived(p))return sp.sv[0];
+  if(p.charge)return (p.hand>0?sp.fh:sp.bh)[0];
   if(p.armed&&!p.armed.serve){const arr=p.hand>0?sp.fh:sp.bh;
     let tc=9;if(b.lastHitter!==p.side&&b.vy*p.side>0)tc=(p.y-b.y)/b.vy;return tc<.2?arr[1]:arr[0];}
   if(Math.hypot(p.vx,p.vy)>.5)return sp.run[Math.floor(p.phase*1.6)%8];
@@ -1226,7 +1253,7 @@ function frame(ts){
   let dt=(ts-last)/1000;last=ts;if(!(dt>0))dt=0;if(dt>.1)dt=.1;
   pollPad();readAxes();
   if(!paused&&!S.over){acc+=dt*S.speed;let n=0;while(acc>=STEP&&n<10){update(STEP);acc-=STEP;n++;}if(n>=10)acc=0;}
-  {const t=camTarget();VIEW.s+=(t-VIEW.s)*Math.min(1,dt*3.2);}
+  {const t=camTarget();VIEW.s+=(t-VIEW.s)*Math.min(1,dt*3.2);const tx=camTargetX();VIEW.sx+=(tx-VIEW.sx)*Math.min(1,dt*3);}
   render();
 }
 
