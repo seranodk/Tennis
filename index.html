@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.10)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.11)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v2.10</title>
+<title>Tennis v2.11</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -334,7 +334,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.10';
+const VERSION='v2.11';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -628,9 +628,14 @@ const POSES=(()=>{
     PZ({crouch:2.5,turn:.85,lean:2,lf:[-4,0],rf:[1.5,-1],rh:[-5,9],lh:[-6,6],rac:2.3,cross:true}), // follow-through across
     PZ({crouch:2.5,lf:[-5,0],rf:[5,0],rh:[3.5,7],lh:[1,7.5],rac:-1.2,two:true})];                // back to ready
   const run=[];for(let i=0;i<8;i++){const f=i/8*Math.PI*2,sn=Math.sin(f),cs=Math.cos(f);
-    run.push(PZ({crouch:1.5,bob:-Math.abs(cs)*1.2,lean:0,lf:[-3.2+cs*1.4,-Math.max(0,sn)*4.8],rf:[3.2+cs*1.4,-Math.max(0,-sn)*4.8],
+    run.push(PZ({crouch:1.5,bob:-Math.abs(cs)*1.2,lean:0,lf:[-3.4+cs*.35,-Math.max(0,sn)*4.6],rf:[3.4+cs*.35,-Math.max(0,-sn)*4.6],
       rh:[6.5,6.5-sn*2.6],lh:[-6.5,6.5+sn*2.6],rac:-.85-sn*.3}));}
-  return {ready,fh,bh,sv,run};
+  const side=d=>{const a=[];for(let i=0;i<8;i++){const f=i/8*Math.PI*2,c=Math.cos(f),sn=Math.sin(f);
+      const spread=4.4+2.4*c;   // feet open and close: lead foot steps out, trail foot follows
+      a.push(PZ({crouch:2.6+Math.abs(sn)*.6,lean:d*1.1,bob:-Math.abs(sn)*.8,
+        lf:[-spread+d*.9,-(d>0?Math.max(0,-sn):Math.max(0,sn))*2.6],rf:[spread+d*.9,-(d>0?Math.max(0,sn):Math.max(0,-sn))*2.6],
+        rh:[4.5+d*.5,8.5],lh:[2+d*.5,9],rac:-1.25,two:true}));}return a;};
+  return {ready,fh,bh,sv,run,sideP:side(1),sideN:side(-1)};
 })();
 function ik(S0,E,a,b,bend){let dx=E[0]-S0[0],dy=E[1]-S0[1];let d=Math.hypot(dx,dy);const m=a+b-.05;if(d>m){dx*=m/d;dy*=m/d;d=m;}if(d<.05)d=.05;
   const ca=clamp((a*a+d*d-b*b)/(2*a*d),-1,1);const ang=Math.atan2(dy,dx)+bend*Math.acos(ca);return [S0[0]+Math.cos(ang)*a,S0[1]+Math.sin(ang)*a];}
@@ -651,8 +656,10 @@ function poseSprite(H,ch,front,ps,noRacket){
   // legs (thigh 10, shin 10.5), knees bend outward
   const legs=()=>{for(const [hp,ft,bend] of [[LHp,ps.lf,1],[RHp,ps.rf,-1]]){const ank=[ft[0],ft[1]-1.6];let kn=ik(hp,ank,10,10,bend*mx);const mdx=(hp[0]+ank[0])/2;kn=[mdx+(kn[0]-mdx)*.28,kn[1]];   // knees bend toward/away from the camera, so only a little sideways
       seg(hp,kn,4,ch.skin);seg(kn,ank,3.4,ch.skin);seg([ank[0],ank[1]-2],ank,3.2,'#f4f4f4');
-      quad([[ft[0]-2.2,ft[1]-2.4],[ft[0]+2.4,ft[1]-2.4],[ft[0]+2.6,ft[1]],[ft[0]-2.4,ft[1]]],'#f6f6f6');
-      quad([[ft[0]-2.4,ft[1]-.8],[ft[0]+2.6,ft[1]-.8],[ft[0]+2.6,ft[1]],[ft[0]-2.4,ft[1]]],'#a3a9b3');}};
+      if(front){quad([[ft[0]-1.9,ft[1]-2.6],[ft[0]+1.9,ft[1]-2.6],[ft[0]+2.4,ft[1]+.4],[ft[0]-2.4,ft[1]+.4]],'#f6f6f6');
+        quad([[ft[0]-2.4,ft[1]-.5],[ft[0]+2.4,ft[1]-.5],[ft[0]+2.4,ft[1]+.4],[ft[0]-2.4,ft[1]+.4]],'#a3a9b3');}
+      else{quad([[ft[0]-2,ft[1]-2.4],[ft[0]+2,ft[1]-2.4],[ft[0]+2.1,ft[1]],[ft[0]-2.1,ft[1]]],'#f6f6f6');
+        quad([[ft[0]-2.1,ft[1]-.8],[ft[0]+2.1,ft[1]-.8],[ft[0]+2.1,ft[1]],[ft[0]-2.1,ft[1]]],'#a3a9b3');}}};
   const arm=(S0,hand,bend,sleeve)=>{const el=ik(S0,hand,6.4,6,bend*mx);seg(S0,el,3.2,ch.skin);if(sleeve)seg(S0,[S0[0]+(el[0]-S0[0])*.45,S0[1]+(el[1]-S0[1])*.45],3.8,shirt);seg(el,hand,2.8,ch.skin);dot(hand[0],hand[1],1.6,ch.skin);};
   const rh=[shX+ps.rh[0],shY+ps.rh[1]],lh=ps.two?[rh[0]+(ps.lh[0]-ps.rh[0]),rh[1]+(ps.lh[1]-ps.rh[1])]:[shX+ps.lh[0],shY+ps.lh[1]];
   const racket=()=>{if(noRacket)return;const a=ps.rac,ca=Math.cos(a)*mx,sa=Math.sin(a);
@@ -697,7 +704,7 @@ function poseSprite(H,ch,front,ps,noRacket){
 function drawPose(H,ch,front,pose,noRacket){return poseSprite(H,ch,front,POSES.ready,noRacket);}
 function buildSet(ch,H,front){
   const mk=ps=>poseSprite(H,ch,front,ps,false);
-  return {ready:mk(POSES.ready),run:POSES.run.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk)};
+  return {ready:mk(POSES.ready),run:POSES.run.map(mk),sideP:POSES.sideP.map(mk),sideN:POSES.sideN.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk)};
 }
 let UMP=null;
 function buildCrew(){
@@ -1236,7 +1243,10 @@ function frameFor(p){
   if(p.charge)return (p.hand>0?sp.fh:sp.bh)[0];
   if(p.armed&&!p.armed.serve){const arr=p.hand>0?sp.fh:sp.bh;
     let tc=9;if(b.lastHitter!==p.side&&b.vy*p.side>0)tc=(p.y-b.y)/b.vy;return tc<.2?arr[1]:arr[0];}
-  if(Math.hypot(p.vx,p.vy)>.5)return sp.run[Math.floor(p.phase*1.6)%8];
+  if(Math.hypot(p.vx,p.vy)>.5){
+    // mostly sideways: side-step shuffle facing the net; otherwise the running cycle
+    if(Math.abs(p.vx)>Math.abs(p.vy)*1.1){const right=p.vx>0,front=p.side>0;const set=(right!==front)?sp.sideP:sp.sideN;return set[Math.floor(p.phase*1.6)%8];}
+    return sp.run[Math.floor(p.phase*1.6)%8];}
   return sp.ready;
 }
 function drawPlayer(g,p){
