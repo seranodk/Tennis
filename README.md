@@ -1,13 +1,15 @@
 # Tennis
 
-Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v3.0.
+Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v3.1.
 
 **Spil:** åbn `index.html`, eller slå GitHub Pages til (Settings → Pages → Branch `main`, mappe `/root`). På mobilen kan siden føjes til hjemmeskærmen og kører så i fuld skærm som en app.
 
 ## Indhold
 - Pixelgrafik i 16-bit-stil med mode 7-bane, publikum og dommer
 - Opvisning med top 64 fra ATP eller WTA (vælg begge spillere) og de fire Grand Slams (Australian Open, Roland-Garros, Wimbledon, US Open) med 128 spillere og 7 runder
-- De fire Grand Slam-stadioner (Rod Laver Arena, Philippe-Chatrier, Centre Court, Arthur Ashe) med kameraintro før kampen
+- Karriere: sæson efter sæson gennem de fire Grand Slams med rangliste og træningspoint
+- 2 spillere på samme skærm (tastatur, to controllere eller mobil med knapper i begge ender)
+- Lyd, publikum og engelsk dommerstemme; Hawk-Eye ved tætte linjekald
 - Top 64-spillerne har hudfarve, hårfarve og frisure som de rigtige
 - Herre- eller damesingle med top 64 fra ATP- og WTA-ranglisten (19. okt. 2026) plus 64 tilfældige kvalifikanter
 - Du spiller selv som en af top 64 i både opvisning og Grand Slam (med spillerens seedning)
