@@ -1,4 +1,4 @@
-<title>Tennis v3.2</title>
+<title>Tennis v3.3</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -208,14 +208,32 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
       <h1 class="logo">TENNIS<em>16-BIT EXPERIENCE</em></h1>
       <div class="menu">
         <button class="mbtn primary" id="bQuick">Hurtig kamp <span>Start nu</span></button>
-        <button class="mbtn" data-go="exhib">Opvisning <span>Vælg spillere</span></button>
-        <button class="mbtn" data-go="two">2 spillere <span>Samme skærm</span></button>
-        <button class="mbtn" data-go="career">Karriere <span>Sæson for sæson</span></button>
-        <button class="mbtn" data-go="tour">Grand Slam <span>128 spillere</span></button>
+        <button class="mbtn" data-go="modes">Game modes <span>Opvisning, Grand Slam …</span></button>
         <button class="mbtn" data-go="settings">Indstillinger <span>Kamp og styring</span></button>
       </div>
       <p class="ver" id="ver"></p>
       <p class="hint" id="fsHint">På iPhone: Del → "Føj til hjemmeskærm" for at spille i fuld skærm som en app.</p>
+    </div>
+  </section>
+
+  <section class="screen dim" id="sModes" hidden>
+    <div class="wrap">
+      <div class="ss-head"><button class="mbtn" data-go="title" style="padding:8px 12px;font-size:13px">◀ Tilbage</button><h2>Game modes</h2></div>
+      <div class="menu" style="width:100%">
+        <button class="mbtn" data-go="exhib">Opvisning <span>Vælg dig og computeren</span></button>
+        <button class="mbtn" data-go="tour">Grand Slam <span>128 spillere · 7 runder</span></button>
+        <button class="mbtn" data-go="career">Karriere <span>Sæson for sæson</span></button>
+        <button class="mbtn" data-go="two">2 spillere <span>Samme skærm</span></button>
+        <button class="mbtn" data-go="train">Træning <span>Boldmaskine og øvelser</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen dim" id="sTrain" hidden>
+    <div class="wrap">
+      <div class="ss-head"><button class="mbtn" data-go="modes" style="padding:8px 12px;font-size:13px">◀ Tilbage</button><span class="ss-step">TRÆNING</span><h2>Vælg øvelse</h2></div>
+      <p class="hint" id="trainWho"></p>
+      <div class="tours" id="trainList"></div>
     </div>
   </section>
 
@@ -240,7 +258,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
       <div class="card" id="tourCard" hidden><h3>GRAND SLAM · <span class="rank" id="rankPts"></span></h3><div class="tours" id="tourList"></div></div>
       <p class="hint" id="setupNote"></p>
       <div class="row2">
-        <button class="mbtn" data-go="title">Tilbage</button>
+        <button class="mbtn" data-go="modes">Tilbage</button>
         <button class="mbtn primary" id="bStart">Start <span>▶</span></button>
       </div>
     </div>
@@ -349,7 +367,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v3.2';
+const VERSION='v3.3';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -389,7 +407,7 @@ const LVT=[
  {react:.27,spd:.85,tsig:.2,margin:1.0,sc:.95,net:.11,leave:.72,fault:.06,err:.08},
  {react:.19,spd:.93,tsig:.13,margin:.78,sc:.76,net:.18,leave:.9,fault:.04,err:.05}];
 function lvp(l){l=Math.max(1,Math.min(4,l));const i=Math.min(2,Math.floor(l-1)),t=l-1-i,a=LVT[i],b=LVT[i+1],o={};for(const k in a)o[k]=a[k]+(b[k]-a[k])*t;return o;}
-const SHOT={flat:{T:.98,g:9.8,m:.85,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
+const SHOT={drop:{T:1.15,g:9.8,m:.35,sc:.8},flat:{T:.98,g:9.8,m:.85,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
 
 /* ================= settings / storage ================= */
 const DEF={court:'hard',exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:0,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
@@ -687,7 +705,14 @@ const POSES=(()=>{
       a.push(PZ({crouch:2.6+Math.abs(sn)*.6,lean:d*1.1,bob:-Math.abs(sn)*.8,
         lf:[-spread+d*.9,-(d>0?Math.max(0,-sn):Math.max(0,sn))*2.6],rf:[spread+d*.9,-(d>0?Math.max(0,sn):Math.max(0,-sn))*2.6],
         rh:[4.5+d*.5,8.5],lh:[2+d*.5,9],rac:-1.25,two:true}));}return a;};
-  return {ready,fh,bh,sv,run,sideP:side(1),sideN:side(-1)};
+  const sm=[
+    PZ({crouch:2,turn:.5,lean:-.5,lf:[-4,0],rf:[3.5,0],rh:[6,-6],lh:[-3,-16],rac:2.3}),                       // sideways, free hand points at the ball
+    PZ({crouch:-1,bob:-3,turn:.55,lean:-1,lf:[-4,-3.5],rf:[3,-2],rh:[4,-5],lh:[-2.5,-14],rac:2.9}),          // jump, racket drops behind the head
+    PZ({crouch:-2,bob:-4.5,turn:.85,lean:.5,lf:[-3.5,-4.5],rf:[3,-3],rh:[1.5,-17],lh:[-4,2],rac:-1.5}),      // contact high above the head
+    PZ({crouch:1,bob:-1.5,turn:.85,lean:2,lf:[-4,-1],rf:[3,-.5],rh:[-1,2],lh:[-5,6],rac:1.2,cross:true}),    // swing down across
+    PZ({crouch:3,turn:.8,lean:1.5,lf:[-4.5,0],rf:[3.5,0],rh:[-5,9],lh:[-6,6],rac:2.4,cross:true}),           // land, follow-through
+    PZ({crouch:2.5,lf:[-5,0],rf:[5,0],rh:[3.5,7],lh:[1,7.5],rac:-1.2,two:true})];
+  return {ready,fh,bh,sv,run,sm,sideP:side(1),sideN:side(-1)};
 })();
 function ik(S0,E,a,b,bend){let dx=E[0]-S0[0],dy=E[1]-S0[1];let d=Math.hypot(dx,dy);const m=a+b-.05;if(d>m){dx*=m/d;dy*=m/d;d=m;}if(d<.05)d=.05;
   const ca=clamp((a*a+d*d-b*b)/(2*a*d),-1,1);const ang=Math.atan2(dy,dx)+bend*Math.acos(ca);return [S0[0]+Math.cos(ang)*a,S0[1]+Math.sin(ang)*a];}
@@ -766,7 +791,7 @@ function poseSprite(H,ch,front,ps,noRacket){
 function drawPose(H,ch,front,pose,noRacket){return poseSprite(H,ch,front,POSES.ready,noRacket);}
 function buildSet(ch,H,front){
   const mk=ps=>poseSprite(H,ch,front,ps,false);
-  return {ready:mk(POSES.ready),run:POSES.run.map(mk),sideP:POSES.sideP.map(mk),sideN:POSES.sideN.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk)};
+  return {ready:mk(POSES.ready),sm:POSES.sm.map(mk),run:POSES.run.map(mk),sideP:POSES.sideP.map(mk),sideN:POSES.sideN.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk)};
 }
 let UMP=null;
 function buildCrew(){
@@ -784,7 +809,7 @@ function mkPlayer(side,ch,ai,level){return {idx:side<0?0:1,side,ch,ai,level,L:lv
   plan:null,react:0,spot:null,atNet:false,aiT:0,assistPlan:null,assistT:0,flash:0,spr:null};}
 function newBall(){return {x:0,y:0,z:1,vx:0,vy:0,vz:0,ax:0,g:G,spin:'flat',bounces:0,lastHitter:0,serve:false,netcord:false,netHit:false,held:true,trail:[]};}
 function startMatch(opts){
-  S={twoP:!!opts.twoP,mode:opts.mode,surface:opts.surface,venue:opts.venue||'std',cfg:opts,ball:newBall(),
+  S={train:opts.train?{kind:opts.train,done:0,hits:0,streak:0,best:0,side:1,served:false}:null,twoP:!!opts.twoP,mode:opts.mode,surface:opts.surface,venue:opts.venue||'std',cfg:opts,ball:newBall(),
     players:[mkPlayer(-1,opts.meCh,opts.mode==='demo',opts.mode==='demo'?3:2),mkPlayer(1,opts.oppCh,!opts.twoP,opts.oppLevel)],
     sc:{p:[0,0],n:0,g:[0,0],sets:[],won:[0,0],tb:false,tbN:0,tbStart:0},
     server:0,serveNo:1,sideSign:1,rally:0,state:'serve_ready',timer:0,speed:[1,1.15,1.3][opts.speed]||1,over:false,boardKey:'',aimX:0,aimY:0,gamesLog:[]};
@@ -948,7 +973,7 @@ function canHit(p){
   if(b.z>3.3||b.z<.04)return false;
   return true;
 }
-function hawkShow(){if(S.hk&&S.hk.close&&S.mode==='play'){S.hawk=Object.assign({},S.hk);}}
+function hawkShow(){if(S.hk&&S.hk.close&&S.mode==='play'&&!S.train){S.hawk=Object.assign({},S.hk);}}
 function startAnim(p,kind,from,dur){p.anim={kind,from,t:0,dur};p.swing=0;}
 function doHit(p,type,err,hold,fromSwing){
   const b=S.ball,ch=p.ch,opp=S.players[p.side<0?1:0];
@@ -968,7 +993,7 @@ function doHit(p,type,err,hold,fromSwing){
     if(volley&&ay<-.3)depth=3.2;
   }
   // power: human = how long the button was held (0-0.7 s); computer varies its pace
-  const pw=p.ai?clamp(Math.random()*.5*(1-stretch),0,1):clamp(((hold||0)-.12)/.6,0,1);
+  const pw=p.ai?clamp((aiSt(p).pow*.7+Math.random()*.45-.15)*(1-stretch),0,1):clamp(((hold||0)-.12)/.6,0,1);
   const pull=err*1.5*(p.hand>0?1:-1)*(p.side<0?-1:1);
   tx+=pull*(p.ai?.6:1.7);if(!p.ai&&err>0)depth+=err*1.1;
   const sweet=Math.abs(err)<.2&&stretch<.75;
@@ -977,9 +1002,10 @@ function doHit(p,type,err,hold,fromSwing){
   // a safe hit stays inside; a hard hit is allowed to drift over the lines
   if(!p.ai&&Math.abs(err)<.35&&stretch<.92){const ox=pw*pw*.9,od=pw*pw*1.3;tx=clamp(tx,-(SW-.3+ox),SW-.3+ox);depth=clamp(depth,1.5,HL-.4+od);}
   let netErr=false;
-  if(p.ai){ // unforced errors: more when stretched, on fast balls and in long rallies
+  if(p.ai&&S.train){S.train.streak++;tx=(Math.random()-.5)*3;depth=HL-2.4-Math.random()*.8;}
+  else if(p.ai){ // unforced errors: more when stretched, on fast balls and in long rallies
     const inc=Math.hypot(b.vx,b.vy);
-    const pe=p.L.err+stretch*.1+(inc>17?.04:0)+Math.min(.08,S.rally*.006)+pw*.05;
+    const pe=p.L.err*aiSt(p).err+stretch*.1+(inc>17?.04:0)+Math.min(.08,S.rally*.006)+pw*.05;
     if(Math.random()<pe){const r=Math.random();
       if(r<.38)depth=HL+.3+Math.random()*1.3;
       else if(r<.72)tx=(tx>=0?1:-1)*(SW+.25+Math.random()*1.0);
@@ -990,15 +1016,15 @@ function doHit(p,type,err,hold,fromSwing){
   const d=Math.hypot(tx-b.x,ty-b.y);
   let T=sh.T*Math.pow(d/22,.75)*(1.1-.2*ch.pow)*(sweet?.9:1)*(volley&&type!=='smash'?.92:1)*(1-.27*pw);
   if(stretch>.85)T*=1.12;
-  T=Math.max(.38,T);
+  T=Math.max(.38,T);if(type==='drop')T=1.05+Math.random()*.2;
   const v=solveShot(b,tx,ty,T,sh.g,sh.m*(type==='lob'?1:(.8+Math.random()*.5))*(1-pw*.45)*(p.ai?1:1-Math.max(0,-err)*.75));
   if(netErr){const tn=-b.y/v[1];if(tn>0){const xn=b.x+v[0]*tn;v[2]=(netH(xn)-.18-b.z+.5*sh.g*tn*tn)/tn;}}
   S.hk=null;
   b.vx=v[0];b.vy=v[1];b.vz=v[2];b.g=sh.g;b.ax=0;b.spin=type==='smash'?'flat':type;b.bounces=0;b.lastHitter=p.side;b.serve=false;b.netcord=false;b.netHit=false;
-  if(type==='smash')startAnim(p,'sv',4,.4);else if(!fromSwing)startAnim(p,p.hand>0?'fh':'bh',2,.36);
+  if(type==='smash')startAnim(p,'sm',1,.5);else if(!fromSwing)startAnim(p,p.hand>0?'fh':'bh',2,.36);
   S.rally++;
   for(const q of S.players){q.plan=null;q.react=0;q.assistPlan=null;}
-  if(p.ai&&!p.atNet&&(p.ch.net?.35:0)+p.L.net>Math.random()&&depth>HL-3&&type!=='lob')p.atNet=true;
+  if(p.ai&&!p.atNet&&(p.ch.net?.25:0)+p.L.net+aiSt(p).net>Math.random()&&depth>HL-3&&type!=='lob')p.atNet=true;
   if(p.ai&&type==='lob')p.atNet=false;
 }
 function toss(p){const box=p.side*S.sideSign;S.aim={x:box*SW*.5,d:SL-.8};const b=S.ball;b.held=false;b.x=p.x+(p.side<0?-.12:.12);b.y=p.y-p.side*.15;b.z=1.5;b.vx=b.vy=0;b.vz=5.6;b.g=G;b.bounces=0;S.state='toss';S.timer=0;p.anim=null;}
@@ -1018,7 +1044,7 @@ function doServe(p,type){
   const b=S.ball,ch=p.ch;
   const q=clamp(1.15-Math.abs(b.vz)/4.2,0,1);
   let ax,ay;
-  if(p.ai){const r=Math.random();ax=(r<.38?1:r<.72?-1:0)*(p.side*S.sideSign);ay=Math.random()<.85?1:-1;}
+  if(p.ai){const r=Math.random(),big=p.ch.style==='S';ax=(r<(big?.45:.38)?1:r<(big?.9:.72)?-1:0)*(p.side*S.sideSign);ay=Math.random()<.85?1:-1;}
   const t=p.ai?serveTarget(p,ax,ay):aimTarget(p);let tx=t.tx,depth=t.depth;
   // fault chance: 10-30% depending on timing, aim and serve type
   let pf={flat:.14,slice:.10,lob:.05}[type]+(1-q)*.17+(t.kind!=='body'?.04:0)-(ch.srv-.7)*.1;
@@ -1039,7 +1065,7 @@ function doServe(p,type){
   }
   const ty=-p.side*depth;
   const d=Math.hypot(tx-b.x,ty-b.y);
-  let T={flat:.6,slice:.76,lob:1.02}[type]*(1.14-.24*ch.srv)*(d/18)*(S.serveNo===2&&type==='flat'?1.08:1)*(1.06-q*.06);
+  let T={flat:.6,slice:.76,lob:1.02}[type]*(p.ai?aiSt(p).aceT:1)*(1.14-.24*ch.srv)*(d/18)*(S.serveNo===2&&type==='flat'?1.08:1)*(1.06-q*.06);
   const g={flat:9.8,slice:8,lob:13}[type];
   let axc=0,txAim=tx;
   if(type==='slice'){axc=t.box*2.6;txAim=tx-.5*axc*T*T*.9;}
@@ -1074,8 +1100,14 @@ function planContact(p,forHuman){
   }
   const r=best||fallback;if(r)r.leave=firstOut;return r;
 }
+/* play style of the computer, from the player's real game: S big server, P power, F fast/defensive, C counter-puncher, A all-court */
+const AIS={S:{pow:.62,marg:1,err:1.05,net:.1,lob:.04,drop:0,deep:0,aceT:.9},P:{pow:.85,marg:.8,err:1.25,net:.04,lob:.03,drop:0,deep:.3,aceT:.95},
+  F:{pow:.4,marg:1.05,err:.9,net:0,lob:.13,drop:0,deep:.6,aceT:1},C:{pow:.3,marg:1.2,err:.7,net:-.05,lob:.1,drop:.02,deep:1.6,aceT:1},
+  A:{pow:.5,marg:1,err:.95,net:.14,lob:.06,drop:.1,deep:.2,aceT:1}};
+const aiSt=p=>AIS[p.ch.style]||AIS.A;
 function aiAim(p,opp,type){
-  const L=p.L,maxX=SW-L.margin;let tx,depth;
+  if(type==='drop'){const away=opp.x>0?-1:1;return [away*(1+Math.random()*1.6),2+Math.random()*.8];}
+  const L=p.L,maxX=SW-L.margin*aiSt(p).marg;let tx,depth;
   const oppNet=Math.abs(opp.y)<6.5,away=opp.x>0?-1:1,r=Math.random();
   if(type==='smash'){tx=away*(maxX-.2);depth=HL-2;}
   else if(type==='lob'){tx=(Math.random()-.5)*3;depth=HL-1.6-L.margin*.5;}
@@ -1087,9 +1119,11 @@ function aiAim(p,opp,type){
 function aiShot(p,opp){
   const b=S.ball;if(b.z>2.2)return 'smash';
   const oppNet=Math.abs(opp.y)<6.5,r=Math.random();
+  const st=aiSt(p);
   if(b.bounces===0)return 'flat';
-  if(oppNet)return r<.3?'lob':'flat';
-  return r<.93?'flat':'lob';
+  if(oppNet)return r<.2+st.lob?'lob':'flat';
+  if(Math.abs(opp.y)>HL-.5&&Math.abs(p.y)<HL-1&&r<st.drop)return 'drop';   // opponent far back: drop shot
+  return r<1-st.lob?'flat':'lob';
 }
 function moveTo(p,tx,ty,dt,f){
   const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy);const sp=moveSpeed(p)*(f||1);
@@ -1099,16 +1133,19 @@ function moveTo(p,tx,ty,dt,f){
 /* Super Tennis-style footwork: full speed almost instantly, stops on the spot */
 function steer(p,dvx,dvy,dt){const k=Math.min(1,dt*38);p.vx+=(dvx-p.vx)*k;p.vy+=(dvy-p.vy)*k;}
 function aiUpdate(p,dt){
+  if(S.train&&(S.train.kind==='corner'||S.state==='feedwait')){moveTo(p,0,p.side*(HL+.4),dt,.6);return;}
   const b=S.ball,L=p.L,opp=S.players[p.side<0?1:0];
   if(S.state==='serve_ready'||S.state==='toss'){
     moveTo(p,p.spot.x,p.spot.y,dt,.6);
     if(S.players[S.server]===p){
       if(S.state==='serve_ready'&&arrived(p)&&S.players[1-S.server].ready&&(S.bounceT||0)>1.35)toss(p);
-      if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random();press(p,S.serveNo===2?(r<.7?'lob':'flat'):(r<.8?'flat':'lob'));}
+      if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random(),big=p.ch.style==='S'||p.ch.style==='P';press(p,S.serveNo===2?(r<(big?.5:.7)?'lob':'flat'):(r<(big?.95:.8)?'flat':'lob'));
+        if(p.ch.style==='S'&&S.serveNo===1&&Math.random()<.25)p.atNet=true;}
     }
     return;
   }
   if(S.state!=='rally'){steer(p,0,0,dt);return;}
+  if(S.train&&S.train.kind==='ret'){moveTo(p,0,p.side*(HL+.5),dt,.6);return;}
   const incoming=b.lastHitter!==p.side&&!b.held&&b.vy*p.side>0;
   if(incoming&&b.bounces<2){
     if(!p.plan){p.react+=dt;if(p.react>=L.react){p.plan=planContact(p,false);if(p.plan){p.plan.press=Math.max(.05,.14+gauss()*L.tsig);p.plan.age=0;
@@ -1122,7 +1159,7 @@ function aiUpdate(p,dt){
     else steer(p,0,0,dt);
   }else{
     p.plan=null;p.react=0;
-    moveTo(p,clamp(b.x*.35,-2,2),p.atNet?p.side*3.4:p.side*(HL+.7),dt,.95);
+    moveTo(p,clamp(b.x*.35,-2,2),p.atNet?p.side*3.4:p.side*(HL+.5+aiSt(p).deep),dt,.95);
   }
 }
 
@@ -1160,6 +1197,7 @@ function arrived(p){return !!p.spot&&Math.hypot(p.x-p.spot.x,p.y-p.spot.y)<.12;}
 /* ================= main update ================= */
 const ev={};
 function update(dt){
+  if(S.over)return;
   const b=S.ball;
   S.timer+=dt;
   for(const p of S.players){
@@ -1210,6 +1248,7 @@ function update(dt){
   if(S.state==='rally'&&ev.wall){const hit=b.lastHitter;
     if(b.bounces===0)point(hit<0?1:0,'UDE');   // never landed: out
     else point(hit<0?0:1,'');}                 // landed in and ran past the player: winner
+  if(S.train&&S.state==='feedwait'&&S.timer>1.1)trainFeed();
   if(S.state==='dead'||S.state==='fault'){if(S.timer>(S.state==='fault'?1.15:1.7)+(S.hawk?2.6:0)){S.hawk=null;afterDead();}}
   b.trail.push(b.x,b.y,b.z);if(b.trail.length>15)b.trail.splice(0,3);
 }
@@ -1220,12 +1259,14 @@ function lineMargin(b){const hit=b.lastHitter;let c=[];
   c.sort((p,q)=>p[0]-q[0]);const m=c[0];return {m:m[0],axis:m[1],val:m[2]};}
 function onBounce(b){
   const hit=b.lastHitter;
+  if(b.bounces===1)S.land={x:b.x,y:b.y,hit,serve:b.serve};
   if(b.bounces===1&&Math.sign(b.y)!==hit&&!b.netHit){const L=lineMargin(b);S.hk=Object.assign(L,{x:b.x,y:b.y,vx:b.vx,vy:b.vy,rally:S.rally,close:Math.abs(L.m)<.1});}
   if(b.serve&&b.bounces===1){
     const box=hit*S.sideSign;
     const inBox=b.y*(-hit)>=-.03&&Math.abs(b.y)<=SL+.05&&b.x*box>=-.05&&Math.abs(b.x)<=SW+.05;
     if(!inBox)return fault(b.netHit?'NET':'FEJL');
     if(b.netcord)return letServe();
+    if(S.train)S.train.served=true;
     return;
   }
   if(b.bounces===1){
@@ -1247,6 +1288,7 @@ function point(w,txt){S.state='dead';S.timer=0;S.pendingWin=w;if(txt)call(txt,''
   if(!txt&&S.hk&&S.hk.m>=0&&S.hk.rally===S.rally)hawkShow();}
 function afterDead(){
   if(S.state==='fault'){setupPoint(false);return;}
+  if(S.train){trainAfter();return;}
   const w=S.pendingWin;S.serveNo=1;
   const res=awardPoint(w);
   if(S.over)return;
@@ -1294,6 +1336,9 @@ function ptStr(i){const sc=S.sc;if(sc.tb)return String(sc.p[i]);const N=['0','15
   if(sc.p[0]>=3&&sc.p[1]>=3){if(sc.p[0]===sc.p[1])return '40';return sc.p[i]>sc.p[1-i]?'AD':'40';}return N[sc.p[i]];}
 function updateBoard(){
   if(!S||S.mode!=='play')return;
+  if(S.train){const T=S.train,d=DRILLS[T.kind],v=T.kind==='rally'?T.streak:T.hits;
+    const html='<div class="row"><span class="srv"></span><span class="nm">'+d.name.toUpperCase()+'</span><span class="sets"><span>'+Math.min(T.done+(T.kind==='rally'?1:0),d.n)+'/'+d.n+'</span></span><span class="pts">'+v+'</span></div><div class="tag">TRÆNING'+(T.kind==='rally'?' · BEDSTE '+T.best:'')+'</div>';
+    if(html!==S.boardKey){S.boardKey=html;$('#board').innerHTML=html;}return;}
   const sc=S.sc;let html='';
   for(const i of [1,0]){
     const sets=sc.sets.map(s=>'<span class="old">'+s[i]+'</span>').join('')+'<span>'+sc.g[i]+'</span>';
@@ -1335,7 +1380,7 @@ function render(){
   const sc=Math.round(VIEW.s),sx=Math.round(VIEW.sx);
   g.fillStyle='#070b1f';g.fillRect(0,0,LW,LH);
   g.drawImage(bg,-sx,-sc);g.translate(-sx,-sc);
-  if(S.mode==='play')drawServeAim(g);
+  if(S.mode==='play'){drawServeAim(g);drawTarget(g);}
   const b=S.ball,far=[],near=[];
   for(const p of S.players)(p.y>=0?far:near).push(p);
   drawGroup(g,far,b.y>=0);
@@ -1371,6 +1416,7 @@ function frameFor(p){
   const isSrv=S.players[S.server]===p;
   if(isSrv&&S.state==='toss')return b.vz>2.4?sp.sv[1]:b.vz>-1.2?sp.sv[2]:sp.sv[3];
   if(isSrv&&S.state==='serve_ready'&&arrived(p))return sp.sv[0];
+  if(p.charge||(p.armed&&!p.armed.serve)){if(b.lastHitter!==p.side&&!b.held&&(b.z>2||(b.vz>0&&b.z>1.4&&Math.abs(p.y)<8)))return sp.sm[0];}
   if(p.charge)return (p.hand>0?sp.fh:sp.bh)[0];
   if(p.armed&&!p.armed.serve){const arr=p.hand>0?sp.fh:sp.bh;
     let tc=9;if(b.lastHitter!==p.side&&b.vy*p.side>0)tc=(p.y-b.y)/b.vy;return tc<.2?arr[1]:arr[0];}
@@ -1444,8 +1490,61 @@ function roster(sex){
 }
 function seedOrder(n){let a=[1];while(a.length<n){const m=a.length*2+1,b=[];for(const x of a)b.push(x,m-x);a=b;}return a;}
 function oppLvl(e){return clamp(CFG.level-1.2+e.s*1.3,1,4);}
-function chFromEntry(e){return {name:e.name,short:e.short,spd:e.spd,pow:e.pow,ctl:e.ctl,srv:e.srv,net:e.style==='A'&&e.s>.6?1:0,...e.look};}
+function chFromEntry(e){return {style:e.style,name:e.name,short:e.short,spd:e.spd,pow:e.pow,ctl:e.ctl,srv:e.srv,net:e.style==='A'&&e.s>.6?1:0,...e.look};}
 let TOUR=null;
+/* ================= training ================= */
+const DRILLS={
+  corner:{name:'Ram hjørnet',desc:'Boldmaskinen sender 15 bolde. Slå dem ned i det gule felt; det skifter side hver gang.',n:15,unit:'i feltet'},
+  ret:{name:'Returnér serven',desc:'Træningspartneren server 15 gode server. Få returen ind i banen.',n:15,unit:'returer inde'},
+  rally:{name:'Lange dueller',desc:'Hold duellen i gang mod en stabil træningspartner. 3 forsøg, din længste duel tæller.',n:3,unit:'slag i træk'}};
+function openTrain(){
+  const L=realList(CFG.sex),me=L[clamp(CFG.exMe[CFG.sex]|0,0,63)];
+  $('#trainWho').textContent='Du træner som '+me.name+' ('+(CFG.sex==='m'?'herrer':'damer')+') – samme spiller som i Opvisning. Underlag: '+SURF[courtOf(CFG.court).surface].name+'.';
+  const el=$('#trainList');el.innerHTML='';const best=(PROG.train||{});
+  for(const k of Object.keys(DRILLS)){const d=DRILLS[k],b=document.createElement('button');b.className='tour';
+    b.innerHTML='<span class="sw" style="background:#ffc53d"></span><span><b>'+d.name+'</b><i>'+d.desc+'</i></span><span class="cup">'+(best[k]!=null?'REKORD '+best[k]:'')+'</span>';
+    b.onclick=()=>startTrain(k);el.appendChild(b);}
+  show('sTrain');
+}
+function startTrain(kind){
+  const L=realList(CFG.sex),mi=clamp(CFG.exMe[CFG.sex]|0,0,63),pi=(mi+7)%64;TOUR=null;
+  playMatch({mode:'play',meCh:chFromEntry(L[mi]),oppCh:chFromEntry(L[pi]),oppLevel:2,...courtOf(CFG.court),sets:1,games:6,tiebreak:1,speed:CFG.speed,first:kind==='ret'?'cpu':'me',train:kind});
+}
+function trainBegin(){
+  const T=S.train;call(DRILLS[T.kind].name.toUpperCase(),DRILLS[T.kind].n+(T.kind==='rally'?' forsøg':' bolde'));
+  if(T.kind==='ret'){S.server=1;setupPoint(true);return;}
+  trainWait();const me=S.players[0],op=S.players[1];me.x=0;me.y=-HL-.4;op.x=0;op.y=HL+.4;me.vx=me.vy=op.vx=op.vy=0;
+}
+function trainWait(){S.ball=newBall();S.ball.held=true;S.server=1;S.state='feedwait';S.timer=0;S.land=null;S.rally=0;S.train.streak=0;}
+function trainFeed(){   // the ball machine (or partner) puts a ball into play
+  const op=S.players[1],b=newBall();S.ball=b;b.held=false;b.x=op.x;b.y=op.y-.3;b.z=1;b.lastHitter=1;b.serve=false;
+  const tx=(Math.random()-.5)*5,ty=-(HL-2-Math.random()*2.4);const v=solveShot(b,tx,ty,1.15,G,.8);b.vx=v[0];b.vy=v[1];b.vz=v[2];
+  S.state='rally';S.timer=0;S.rally=0;S.land=null;startAnim(op,'fh',2,.36);
+}
+function trainTarget(T){const sd=T.side;return {x0:sd>0?SW-2.6:-SW-.045,x1:sd>0?SW+.045:-SW+2.6,y0:HL-3.2,y1:HL+.045};}
+function trainAfter(){
+  const T=S.train,Ld=S.land,mine=Ld&&Ld.hit===-1&&Ld.y>0,inC=mine&&Math.abs(Ld.x)<=SW+.045&&Ld.y<=HL+.045;
+  if(T.kind==='corner'){T.done++;const Z=trainTarget(T),hit=mine&&Ld.x>=Z.x0&&Ld.x<=Z.x1&&Ld.y>=Z.y0&&Ld.y<=Z.y1;if(hit)T.hits++;
+    call(hit?'RAMT!':inC?'INDE, MEN FORBI':'MISSET',T.hits+' / '+T.done);T.side*=-1;}
+  else if(T.kind==='ret'){if(T.served){T.done++;if(inC)T.hits++;call(inC?'RETUR INDE':'MISSET',T.hits+' / '+T.done);}}
+  else{T.done++;T.best=Math.max(T.best,T.streak);call('DUEL: '+T.streak+' SLAG','Bedste: '+T.best);}
+  if(T.done>=DRILLS[T.kind].n)return trainEnd();
+  if(T.kind==='ret'){T.served=false;S.serveNo=1;S.server=1;setupPoint(false);}else trainWait();
+}
+function trainEnd(){
+  const T=S.train,d=DRILLS[T.kind],score=T.kind==='rally'?T.best:T.hits;S.over=true;
+  PROG.train=PROG.train||{};const rec=score>(PROG.train[T.kind]??-1);if(rec)PROG.train[T.kind]=score;save();
+  setTimeout(()=>{$('#endTitle').textContent=d.name.toUpperCase();
+    $('#endScore').textContent=T.kind==='rally'?score+' '+d.unit:score+' / '+d.n+' '+d.unit;
+    $('#endSub').textContent=rec?'Ny rekord!':'Rekord: '+PROG.train[T.kind]+'.';
+    const main=$('#bEndMain');main.textContent='Prøv igen';main.onclick=()=>startTrain(T.kind);
+    $('#touch').hidden=true;$('#touch2').hidden=true;$('#hud').hidden=true;show('sEnd');},1300);
+}
+function drawTarget(g){
+  if(!S.train||S.train.kind!=='corner')return;const Z=trainTarget(S.train),on=(performance.now()/250|0)%2;
+  g.globalAlpha=.32;fillQuad(g,[[Z.x0,Z.y0],[Z.x1,Z.y0],[Z.x1,Z.y1],[Z.x0,Z.y1]],'#ffd23d');g.globalAlpha=1;
+  if(on)for(const [a,b] of [[[Z.x0,Z.y0],[Z.x1,Z.y0]],[[Z.x1,Z.y0],[Z.x1,Z.y1]],[[Z.x1,Z.y1],[Z.x0,Z.y1]],[[Z.x0,Z.y1],[Z.x0,Z.y0]]])rline(g,a[0],a[1],b[0],b[1],.06,'#ffd23d');
+}
 /* ================= career ================= */
 let CAR=null;try{CAR=JSON.parse(localStorage.getItem('tennis.career')||'null');}catch(e){}
 function carSave(){try{localStorage.setItem('tennis.career',JSON.stringify(CAR));}catch(e){}}
@@ -1474,7 +1573,7 @@ function buildCareer(){
     const b=document.createElement('button');b.textContent='+';b.disabled=CAR.sp<1||v>=.99;b.onclick=()=>{CAR.sp--;CAR.bonus[k]=(CAR.bonus[k]||0)+.02;carSave();buildCareer();};row.appendChild(b);tr.appendChild(row);}
   $('#carHist').innerHTML=CAR.hist.length?CAR.hist.slice(0,12).map(h=>'<div>Sæson '+h.season+' · '+SLAMS[h.slam].name+': <b>'+h.res+'</b> <span>+'+h.pts+' point</span></div>').join(''):'<div><span>Ingen turneringer spillet endnu.</span></div>';
 }
-$('#bCarBack').onclick=()=>show('sTitle');
+$('#bCarBack').onclick=()=>show('sModes');
 $('#bCarStart').onclick=()=>{const r=carPick+1,start=fieldPts(r);
   CAR={sex:carPickSex,base:carPick,season:1,slam:0,sp:3,bonus:{},basePts:start*.55,slamPts:[0,1,2,3].map(()=>start*.45/4),titles:[],hist:[]};carSave();buildCareer();};
 $('#bCarReset').onclick=()=>{if(!carResetArm){carResetArm=1;$('#bCarReset').textContent='Tryk igen for at slette karrieren';return;}CAR=null;try{localStorage.removeItem('tennis.career');}catch(e){}buildCareer();};
@@ -1540,7 +1639,7 @@ function playTourRound(){
 }
 
 /* ================= menus ================= */
-const screens=['sCareer','sTitle','sSetup','sHelp','sPause','sEnd','sSettings','sDraw','sPick'];
+const screens=['sModes','sTrain','sCareer','sTitle','sSetup','sHelp','sPause','sEnd','sSettings','sDraw','sPick'];
 let helpReturn='sTitle';
 function show(id){for(const s of screens)$('#'+s).hidden=s!==id;}
 function startDemo(){
@@ -1583,7 +1682,7 @@ function pick(k){
 }
 function pickStart(){if(WIZ.phase!=='ready')return;CFG.exMe[CFG.sex]=WIZ.me;CFG.exOpp[CFG.sex]=WIZ.opp;save();setupMode='exhib';launch(WIZ.mode==='2p');}
 // back: from the player list you start over with Player 1; from Player 1 you go back to men/women
-$('#bPickBack').onclick=()=>{if(WIZ.step===0)show('sTitle');else if(WIZ.phase!=='me'){WIZ.phase='me';WIZ.me=-2;WIZ.opp=-2;WIZ.cur=-1;buildPick();}else wizard(0);};
+$('#bPickBack').onclick=()=>{if(WIZ.step===0)show('sModes');else if(WIZ.phase!=='me'){WIZ.phase='me';WIZ.me=-2;WIZ.opp=-2;WIZ.cur=-1;buildPick();}else wizard(0);};
 $('#bPickGo').onclick=pickStart;
 function courtOf(k){const m={rg:'clay',wim:'grass',uso:'hard'};return {venue:'std',surface:m[k]||k||'hard'};}
 function quickMatch(){
@@ -1674,7 +1773,7 @@ function playMatch(o){
   isTouch=isTouch||matchMedia('(pointer:coarse)').matches;
   $('#touch').hidden=!isTouch;$('#touch2').hidden=!(isTouch&&S&&S.twoP);
   paused=false;startMatch(o);
-  call(o.tourName?RNAMES[o.round].toUpperCase():'KLAR',o.meCh.short+' mod '+o.oppCh.short);
+  if(o.train)trainBegin();else call(o.tourName?RNAMES[o.round].toUpperCase():'KLAR',o.meCh.short+' mod '+o.oppCh.short);
 }
 function matchOver(w){
   S.over=true;
@@ -1710,7 +1809,7 @@ function resume(){paused=false;show(null);last=performance.now();}
 function toMenu(){paused=false;TOUR=null;show('sTitle');startDemo();}
 
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.go;
-  if(g==='exhib'){WIZ.mode='ex';wizard(0);}else if(g==='two'){WIZ.mode='2p';wizard(0);}else if(g==='career')openCareer();else if(g==='tour')openSetup(g);else if(g==='help'){helpReturn='sSettings';show('sHelp');}
+  if(g==='modes')show('sModes');else if(g==='train')openTrain();else if(g==='exhib'){WIZ.mode='ex';wizard(0);}else if(g==='two'){WIZ.mode='2p';wizard(0);}else if(g==='career')openCareer();else if(g==='tour')openSetup(g);else if(g==='help'){helpReturn='sSettings';show('sHelp');}
   else if(g==='settings'){buildSettings();show('sSettings');}else if(g==='title')show('sTitle');}));
 $('#bStart').onclick=launch;
 $('#bQuick').onclick=()=>quickMatch();
