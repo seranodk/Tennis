@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.7)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v2.8)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v2.7</title>
+<title>Tennis v2.8</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,12 +147,18 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 .ssi i{font-style:normal;font-size:10px;color:#b9c6ef;white-space:nowrap}
 .ssi.big{padding:22px 16px;font-size:20px;grid-template-columns:minmax(0,1fr) auto}
 .ssi.cur{outline:2px solid #fff;outline-offset:-2px}
-.ssi.me{animation:ssgreen .4s steps(1) infinite;color:#062b0c}
-.ssi.op{animation:sswhite .4s steps(1) infinite;color:#111}
-.ssi.me .n,.ssi.me i,.ssi.op .n,.ssi.op i{color:inherit}
-@keyframes ssgreen{0%{background:#2fd35a}50%{background:#1d3b8f;color:#fff}}
-@keyframes sswhite{0%{background:#ffffff}50%{background:#1d3b8f;color:#fff}}
-@media (prefers-reduced-motion:reduce){.ssi.me{animation:none;background:#2fd35a}.ssi.op{animation:none;background:#fff}}
+.ssi.me{animation:ssgreen .4s steps(1) infinite}
+.ssi.op{animation:sswhite .4s steps(1) infinite}
+@keyframes ssgreen{0%{box-shadow:inset 0 0 0 3px #2fd35a}50%{box-shadow:inset 0 0 0 3px transparent}}
+@keyframes sswhite{0%{box-shadow:inset 0 0 0 3px #ffffff}50%{box-shadow:inset 0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.ssi.me{animation:none;box-shadow:inset 0 0 0 3px #2fd35a}.ssi.op{animation:none;box-shadow:inset 0 0 0 3px #fff}}
+.ss-slots{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:stretch}
+@media (max-width:460px){.ss-slots{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ss-slots .mbtn{grid-column:1/-1}}
+.slot{background:#0d1640;border:2px solid #26336f;padding:8px 10px;display:grid;gap:4px;min-width:0}
+.slot span{font-family:var(--f-pixel);font-size:11px;letter-spacing:.1em}
+.slot.me span{color:#2fd35a}.slot.op span{color:#fff}
+.slot b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot.active.me{border-color:#2fd35a}.slot.active.op{border-color:#fff}
 .ss-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:44px}
 .ss-bar .hint{font-size:14px;max-width:none}
 .ss-bar b.g{color:#2fd35a}.ss-bar b.w{color:#fff}
@@ -206,7 +212,8 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
     <div id="title">
       <h1 class="logo">TENNIS<em>16-BIT CENTER COURT</em></h1>
       <div class="menu">
-        <button class="mbtn primary" data-go="exhib">Opvisning <span>1 kamp</span></button>
+        <button class="mbtn primary" id="bQuick">Hurtig kamp <span>Start nu</span></button>
+        <button class="mbtn" data-go="exhib">Opvisning <span>Vælg spillere</span></button>
         <button class="mbtn" data-go="tour">Grand Slam <span>128 spillere</span></button>
         <button class="mbtn" data-go="settings">Indstillinger <span>Kamp og styring</span></button>
         <button class="mbtn" data-go="help">Styring <span>Slag og taster</span></button>
@@ -246,7 +253,11 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
   <section class="screen dim" id="sPick" hidden>
     <div class="wrap">
       <div class="ss-head"><button class="mbtn" id="bPickBack" style="padding:8px 12px;font-size:13px">◀ Tilbage</button><span class="ss-step" id="pickStep"></span><h2 id="pickTitle"></h2></div>
-      <div class="ss-bar"><p class="hint" id="pickHint"></p><button class="mbtn primary" id="bPickGo" hidden>Start kamp <span>▶</span></button></div>
+      <div class="ss-slots" id="pickSlots">
+        <div class="slot me" id="slotMeBox"><span>PLAYER 1</span><b id="slotMe">—</b></div>
+        <div class="slot op" id="slotOppBox"><span>COMPUTER</span><b id="slotOpp">—</b></div>
+        <button class="mbtn primary" id="bPickGo" hidden>Start <span>▶</span></button>
+      </div>
       <div class="ss" id="pickList"></div>
     </div>
   </section>
@@ -323,7 +334,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.7';
+const VERSION='v2.8';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -1308,48 +1319,55 @@ function startDemo(){
   $('#hud').hidden=true;$('#touch').hidden=true;paused=false;
 }
 let setupMode='exhib';
-/* Exhibition in Sensible Soccer-style screens: 1) men/women  2) one list: first pick = you (green flash), second pick = computer (white flash) */
-const WIZ={step:0,cur:0,items:[],phase:'me',me:0,opp:-1};
-function wizard(step){WIZ.step=step;if(step===1){WIZ.phase='me';WIZ.me=clamp(CFG.exMe[CFG.sex]|0,0,63);WIZ.opp=CFG.exOpp[CFG.sex];}show('sPick');buildPick();}
+/* Exhibition in Sensible Soccer-style screens: 1) men/women (goes on at once)  2) one list: first pick = Player 1, second = Computer */
+const WIZ={step:0,cur:-1,items:[],phase:'me',me:-2,opp:-2};
+function wizard(step){WIZ.step=step;WIZ.cur=-1;if(step===1){WIZ.phase='me';WIZ.me=-2;WIZ.opp=-2;}show('sPick');buildPick();}
 function buildPick(){
   const L=realList(CFG.sex),el=$('#pickList');el.innerHTML='';el.className='ss';
-  let items=[];const go=$('#bPickGo');
-  if(WIZ.step===0){$('#pickStep').textContent='1/2';$('#pickTitle').textContent='Herrer eller damer';el.className='ss one';$('#pickHint').textContent='';go.hidden=true;
-    items=[['m','HERRER','ATP top 64'],['w','DAMER','WTA top 64']];WIZ.cur=CFG.sex==='w'?1:0;}
-  else{$('#pickStep').textContent='2/2';$('#pickTitle').textContent='Vælg spillere';
-    $('#pickHint').innerHTML=WIZ.phase==='me'?'Vælg <b class="g">din spiller</b>':WIZ.phase==='opp'?'Vælg <b class="w">computerens spiller</b>':'<b class="g">'+L[WIZ.me].name+'</b> mod <b class="w">'+(WIZ.opp<0?'tilfældig':L[WIZ.opp].name)+'</b>';
-    go.hidden=WIZ.phase!=='ready';
-    items=[[-1,'TILFÆLDIG MODSTANDER','','?']].concat(L.map((e,i)=>[i,e.name,e.cc+' '+STYLE[e.style],e.rank]));
-    if(!WIZ.curSet)WIZ.cur=WIZ.me+1;}
+  let items=[];
+  $('#pickSlots').hidden=WIZ.step===0;
+  if(WIZ.step===0){$('#pickStep').textContent='1/2';$('#pickTitle').textContent='Herrer eller damer';el.className='ss one';
+    items=[['m','HERRER','ATP top 64'],['w','DAMER','WTA top 64']];}
+  else{$('#pickStep').textContent='2/2';$('#pickTitle').textContent=WIZ.phase==='me'?'Vælg Player 1':WIZ.phase==='opp'?'Vælg computerens spiller':'Klar til kamp';
+    const nm=i=>i===-1?'Tilfældig':i>=0?L[i].name:'—';
+    $('#slotMe').textContent=nm(WIZ.me);$('#slotOpp').textContent=nm(WIZ.opp);
+    $('#slotMeBox').classList.toggle('active',WIZ.phase==='me');$('#slotOppBox').classList.toggle('active',WIZ.phase==='opp');
+    $('#bPickGo').hidden=WIZ.phase!=='ready';
+    items=(WIZ.phase==='me'?[]:[[-1,'TILFÆLDIG MODSTANDER','','?']]).concat(L.map((e,i)=>[i,e.name,e.cc+' '+STYLE[e.style],e.rank]));}
   WIZ.items=items;
   items.forEach((it,k)=>{const b=document.createElement('button');
     let cls='ssi'+(WIZ.step===0?' big':'')+(k===WIZ.cur?' cur':'');
-    if(WIZ.step===1){if(it[0]===WIZ.me&&it[0]>=0)cls+=' me';if(WIZ.phase!=='me'&&it[0]===WIZ.opp)cls+=' op';}
-    b.className=cls;b.disabled=WIZ.step===1&&WIZ.phase==='me'&&it[0]<0;
+    if(WIZ.step===1){if(it[0]===WIZ.me)cls+=' me';if(it[0]===WIZ.opp)cls+=' op';}
+    b.className=cls;
     b.innerHTML=(WIZ.step===0?'':'<span class="n">'+it[3]+'</span>')+'<b>'+it[1]+'</b><i>'+it[2]+'</i>';
     b.onclick=()=>pick(k);el.appendChild(b);});
   const c=el.children[WIZ.cur];if(c){c.focus({preventScroll:true});c.scrollIntoView({block:'nearest'});}
 }
 function pick(k){
-  const it=WIZ.items[k];if(!it)return;WIZ.cur=k;WIZ.curSet=1;
-  if(WIZ.step===0){const el=$('#pickList');[...el.children].forEach((c,i)=>c.classList.toggle('me',i===k));
-    setTimeout(()=>{CFG.sex=it[0];save();WIZ.curSet=0;wizard(1);},380);return;}
-  if(WIZ.phase==='me'||WIZ.phase==='ready'){if(it[0]<0)return;WIZ.me=it[0];if(WIZ.opp===WIZ.me)WIZ.opp=-1;WIZ.phase='opp';}
-  else{if(it[0]===WIZ.me)return;WIZ.opp=it[0];WIZ.phase='ready';}
+  const it=WIZ.items[k];if(!it)return;
+  if(WIZ.step===0){CFG.sex=it[0];save();wizard(1);return;}
+  if(WIZ.phase==='me'){WIZ.me=it[0];WIZ.phase='opp';WIZ.cur=-1;}
+  else{if(it[0]===WIZ.me)return;WIZ.opp=it[0];WIZ.phase='ready';WIZ.cur=k;}
   buildPick();
 }
-function pickStart(){if(WIZ.phase!=='ready')return;CFG.exMe[CFG.sex]=WIZ.me;CFG.exOpp[CFG.sex]=WIZ.opp;save();WIZ.curSet=0;setupMode='exhib';launch();}
-$('#bPickBack').onclick=()=>{WIZ.curSet=0;if(WIZ.step===0)show('sTitle');else if(WIZ.phase==='opp'){WIZ.phase='me';buildPick();}else if(WIZ.phase==='ready'){WIZ.phase='opp';buildPick();}else wizard(0);};
+function pickStart(){if(WIZ.phase!=='ready')return;CFG.exMe[CFG.sex]=WIZ.me;CFG.exOpp[CFG.sex]=WIZ.opp;save();setupMode='exhib';launch();}
+// back: from the player list you start over with Player 1; from Player 1 you go back to men/women
+$('#bPickBack').onclick=()=>{if(WIZ.step===0)show('sTitle');else if(WIZ.phase!=='me'){WIZ.phase='me';WIZ.me=-2;WIZ.opp=-2;WIZ.cur=-1;buildPick();}else wizard(0);};
 $('#bPickGo').onclick=pickStart;
+function quickMatch(){
+  const sex=Math.random()<.5?'m':'w',L=realList(sex),a=(Math.random()*32)|0;let b=(Math.random()*31)|0;if(b>=a)b++;
+  TOUR=null;CFG.sex=sex;
+  playMatch({mode:'play',meCh:chFromEntry(L[a]),oppCh:chFromEntry(L[b]),oppLevel:oppLvl(L[b]),surface:CFG.surface,sets:CFG.sets,games:CFG.games,tiebreak:CFG.tiebreak,speed:CFG.speed,first:CFG.first});
+}
 addEventListener('keydown',e=>{
   if($('#sPick').hidden)return;const el=$('#pickList'),n=WIZ.items.length,cols=getComputedStyle(el).gridTemplateColumns.split(' ').length;
-  let c=WIZ.cur;
+  let c=WIZ.cur<0?-1:WIZ.cur;if(c<0&&/Arrow/.test(e.code)){c=0;}else
   if(e.code==='ArrowDown')c+=cols;else if(e.code==='ArrowUp')c-=cols;else if(e.code==='ArrowRight')c+=1;else if(e.code==='ArrowLeft')c-=1;
-  else if(e.code==='Enter'||e.code==='Space'||e.code==='KeyJ'||e.code==='KeyZ'){e.preventDefault();if(WIZ.step===1&&WIZ.phase==='ready'&&e.code==='Enter')pickStart();else pick(WIZ.cur);return;}
+  else if(e.code==='Enter'||e.code==='Space'||e.code==='KeyJ'||e.code==='KeyZ'){e.preventDefault();if(WIZ.step===1&&WIZ.phase==='ready')pickStart();else if(WIZ.cur>=0)pick(WIZ.cur);return;}
   else if(e.code==='Escape'||e.code==='Backspace'){e.preventDefault();$('#bPickBack').click();return;}
   else return;
   e.preventDefault();c=clamp(c,0,n-1);if(el.children[c]&&el.children[c].disabled)c=clamp(c+(c>WIZ.cur?1:-1),0,n-1);
-  WIZ.cur=c;WIZ.curSet=1;[...el.children].forEach((b,i)=>b.classList.toggle('cur',i===c));el.children[c].focus({preventScroll:true});el.children[c].scrollIntoView({block:'nearest'});
+  WIZ.cur=c;[...el.children].forEach((b,i)=>b.classList.toggle('cur',i===c));el.children[c].focus({preventScroll:true});el.children[c].scrollIntoView({block:'nearest'});
 });
 function openSetup(mode){setupMode=mode;$('#setupTitle').textContent=mode==='tour'?'Grand Slam':'Opvisning';
   $('#oppCard').hidden=mode==='tour';$('#exCard').hidden=false;$('#meCard').hidden=true;$('#tourCard').hidden=mode!=='tour';
@@ -1459,6 +1477,7 @@ document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=
   if(g==='exhib')wizard(0);else if(g==='tour')openSetup(g);else if(g==='help'){helpReturn='sTitle';show('sHelp');}
   else if(g==='settings'){buildSettings();show('sSettings');}else if(g==='title')show('sTitle');}));
 $('#bStart').onclick=launch;
+$('#bQuick').onclick=()=>quickMatch();
 $('#bHelpBack').onclick=()=>show(helpReturn);
 $('#bPause').onclick=()=>pause();
 $('#bResume').onclick=resume;
