@@ -1,4 +1,4 @@
-<title>Tennis v2.6</title>
+<title>Tennis v2.7</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,15 +54,14 @@ button:focus-visible{outline:2px solid var(--led);outline-offset:2px}
 #stickBase.idle{opacity:.38}
 #stickKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;
   background:radial-gradient(circle at 40% 35%,#e9edf9,#9aa6d6);box-shadow:0 3px 8px #0008}
-#pad{position:absolute;pointer-events:auto;width:196px;height:150px;
+#pad{position:absolute;pointer-events:auto;width:224px;height:196px;
   right:max(14px,calc(var(--sr) + 10px));bottom:calc(var(--sb) + 16px);touch-action:none}
-.sb{position:absolute;width:76px;height:76px;border-radius:50%;border:none;display:grid;place-items:center;align-content:center;
-  font-family:var(--f-pixel);font-size:22px;line-height:1;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.45);touch-action:none}
+.sb{position:absolute;width:108px;height:108px;border-radius:50%;border:none;display:grid;place-items:center;align-content:center;
+  font-family:var(--f-pixel);font-size:28px;line-height:1;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.45);touch-action:none}
 .sb small{font-family:var(--f-ui);font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.9;margin-top:3px}
 .sb.on{transform:translateY(3px) scale(.95);box-shadow:0 1px 0 rgba(0,0,0,.45);filter:brightness(1.25)}
 .sbY{left:0;top:0;background:#2f9d55}
-.sbA{right:0;top:0;background:#d8433a}
-.sbB{left:60px;bottom:0;background:#d8a21e;color:#241800}
+.sbB{right:0;bottom:0;background:#d8a21e;color:#241800}
 
 .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;
   padding-top:calc(var(--st) + 18px);padding-bottom:calc(var(--sb) + 24px);
@@ -182,8 +181,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
     <div id="stickZone"><div id="stickBase" class="idle"><div id="stickKnob"></div></div></div>
     <div id="pad">
       <button class="sb sbY" data-shot="lob">Y<small>LOB</small></button>
-      <button class="sb sbA" data-shot="slice">A<small>SLICE</small></button>
-      <button class="sb sbB" data-shot="flat">B<small>FLAD</small></button>
+      <button class="sb sbB" data-shot="flat">B<small>HÅRD</small></button>
     </div>
   </div>
 
@@ -254,8 +252,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
       <h2>Styring</h2>
       <div class="card"><h3>SLAG</h3>
         <div class="keys">
-          <kbd>B</kbd><span><b>Flad</b> – hurtigt og lige. Hård serv.</span>
-          <kbd>A</kbd><span><b>Slice</b> – underskåret, flyder lavt og glider efter hoppet. Skruet serv.</span>
+          <kbd>B</kbd><span><b>Hårdt slag</b> – hold knappen nede for mere fart (og større risiko for ude). Hård serv.</span>
           <kbd>Y</kbd><span><b>Lob</b> – højt over modstanderen ved nettet. Sikker kick-serv.</span>
         </div>
       </div>
@@ -263,21 +260,20 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
         <p>Hold retning mens du slår: venstre/højre sender bolden mod siden, op slår dybt, ned slår kort. Slår du tidligt, trækker bolden på tværs; slår du sent, går den den anden vej. Trykker du lidt for tidligt, venter spilleren med ketsjeren tilbage og slår når bolden kommer.</p>
       </div>
       <div class="card"><h3>SERV</h3>
-        <p>Du server fra baglinjen over i feltet på skrå. Tryk en slagknap for at kaste bolden op, og tryk igen når den er øverst. Retning vælger hvor i feltet: venstre/højre for ud til siden eller ind på midten, ingen retning for mod kroppen, ned for kort. Den gule markering viser målet. Ramt øverst og uden at gå efter linjerne går langt de fleste server ind.</p>
+        <p>Du server fra baglinjen over i feltet på skrå. Flyt dig langs baglinjen, og tryk en slagknap for at kaste bolden op. Mens bolden er i luften styrer du den gule markering i feltet; tryk igen for at serve. Ramt nær toppen af kastet og uden at gå efter linjerne går langt de fleste server ind.</p>
       </div>
       <div class="card"><h3>TASTATUR OG CONTROLLER</h3>
         <div class="keys">
           <kbd>Pile / WASD</kbd><span>Løb og sigt</span>
-          <kbd>J · Z · Mellemrum</kbd><span>B – Flad</span>
-          <kbd>K · X</kbd><span>A – Slice</span>
-          <kbd>U · C · L</kbd><span>Y – Lob</span>
+          <kbd>J · Z · Mellemrum</kbd><span>B – Hårdt slag</span>
+          <kbd>K · X · L · C</kbd><span>Y – Lob</span>
           <kbd>P · Esc</kbd><span>Pause</span>
           <kbd>F</kbd><span>Fuld skærm</span>
           <kbd>Gamepad</kbd><span>Stik/d-pad, knapperne som på en SNES-pad, Start = pause</span>
         </div>
       </div>
       <div class="card"><h3>MOBIL</h3>
-        <p>Venstre halvdel af skærmen er et joystick: sæt fingeren hvor som helst. De tre knapper til højre er slagene. Løbehjælp i indstillingerne flytter dig mod bolden når du ikke styrer selv.</p>
+        <p>Venstre halvdel af skærmen er et joystick: sæt fingeren hvor som helst. De to store knapper til højre er slagene. Løbehjælp i indstillingerne flytter dig mod bolden når du ikke styrer selv.</p>
       </div>
       <div class="row2"><button class="mbtn primary" id="bHelpBack">Tilbage</button></div>
     </div>
@@ -310,7 +306,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.6';
+const VERSION='v2.7';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -347,12 +343,13 @@ function lvp(l){l=Math.max(1,Math.min(4,l));const i=Math.min(2,Math.floor(l-1)),
 const SHOT={flat:{T:.98,g:9.8,m:.85,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
 
 /* ================= settings / storage ================= */
-const DEF={exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:1,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
+const DEF={exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:0,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
 let CFG=Object.assign({},DEF), PROG={pts:{m:0,w:0},cups:{m:[0,0,0,0],w:[0,0,0,0]}};
 function load(){try{const a=JSON.parse(localStorage.getItem('tennis.cfg2')||'null');if(a)Object.assign(CFG,a);
   const b=JSON.parse(localStorage.getItem('tennis.prog2')||'null');if(b&&b.pts&&b.cups)PROG=b;}catch(e){}}
 function save(){try{localStorage.setItem('tennis.cfg2',JSON.stringify(CFG));localStorage.setItem('tennis.prog2',JSON.stringify(PROG));}catch(e){}}
 load();
+if(!CFG.v27){CFG.assist=0;CFG.v27=1;save();}
 if(!CFG.tourMe||typeof CFG.tourMe!=='object')CFG.tourMe={m:0,w:0};
 if(!CFG.exMe||typeof CFG.exMe!=='object')CFG.exMe={m:0,w:0};if(!CFG.exOpp||typeof CFG.exOpp!=='object')CFG.exOpp={m:-1,w:-1};
 
@@ -701,8 +698,8 @@ function setupPoint(snap){
 
 /* ================= input ================= */
 const inp={x:0,y:0,kx:0,ky:0,tx:0,ty:0,gx:0,gy:0};
-const keys=new Set();const held={flat:0,slice:0,lob:0};
-const KEYMAP={KeyJ:'flat',KeyZ:'flat',Space:'flat',KeyK:'slice',KeyX:'slice',KeyU:'lob',KeyC:'lob',KeyL:'lob',KeyV:'lob'};
+const keys=new Set();const held={flat:0,lob:0};
+const KEYMAP={KeyJ:'flat',KeyZ:'flat',Space:'flat',KeyK:'lob',KeyX:'lob',KeyU:'lob',KeyC:'lob',KeyL:'lob',KeyV:'lob'};
 addEventListener('keydown',e=>{
   if(e.code.startsWith('Arrow')||e.code==='Space')e.preventDefault();
   if(e.repeat)return;
@@ -713,7 +710,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyF')toggleFs();
 });
 addEventListener('keyup',e=>{keys.delete(e.code);const sh=KEYMAP[e.code];if(sh)held[sh]=Math.max(0,held[sh]-1);});
-addEventListener('blur',()=>{keys.clear();held.flat=held.slice=held.lob=0;});
+addEventListener('blur',()=>{keys.clear();held.flat=held.lob=0;});
 function keyAxes(){const l=keys.has('ArrowLeft')||keys.has('KeyA'),r=keys.has('ArrowRight')||keys.has('KeyD'),u=keys.has('ArrowUp')||keys.has('KeyW'),d=keys.has('ArrowDown')||keys.has('KeyS');
   inp.kx=(r?1:0)-(l?1:0);inp.ky=(u?1:0)-(d?1:0);}
 let stickId=null,stickOx=0,stickOy=0;const RAD=52;
@@ -731,7 +728,7 @@ document.querySelectorAll('.sb').forEach(bt=>{
   bt.addEventListener('pointerdown',e=>{e.preventDefault();isTouch=true;bt.classList.add('on');held[bt.dataset.shot]=1;if(S&&S.mode==='play'&&!paused){readAxes();humanPress(bt.dataset.shot);}});
   const off=()=>{bt.classList.remove('on');held[bt.dataset.shot]=0;};bt.addEventListener('pointerup',off);bt.addEventListener('pointercancel',off);bt.addEventListener('pointerleave',off);
 });
-const gpPrev=[];const GPMAP={0:'flat',1:'slice',2:'lob',3:'lob'};
+const gpPrev=[];const GPMAP={0:'flat',1:'flat',2:'lob',3:'lob'};
 function pollPad(){inp.gx=inp.gy=0;const pads=navigator.getGamepads?navigator.getGamepads():[];for(const gp of pads){if(!gp)continue;
   let ax=gp.axes[0]||0,ay=-(gp.axes[1]||0);if(Math.hypot(ax,ay)<.2)ax=ay=0;
   const bt=i=>gp.buttons[i]&&gp.buttons[i].pressed;
@@ -776,7 +773,7 @@ function solveShot(b,tx,ty,T,g,margin){
 }
 
 /* ================= hitting ================= */
-function reachOf(p){return (p.ai?1.2:1.42)+p.ch.spd*.25;}
+function reachOf(p){return (p.ai?.95:1.42)+p.ch.spd*(p.ai?.2:.25);}
 function handFor(p){const b=S.ball;let bx=b.x;
   if(!b.held&&b.vy*p.side>0){const tc=clamp((p.y-b.y)/b.vy,0,1.2);bx=b.x+b.vx*tc;}
   const rel=bx-p.x;return (p.side<0?rel>=0:rel<=0)?1:-1;}
@@ -797,7 +794,7 @@ function canHit(p){
   const b=S.ball;
   if(b.held||b.lastHitter===p.side||b.bounces>=2||(b.serve&&b.bounces===0))return false;
   const rel=(b.y-p.y)*p.side;
-  if(rel<(p.ai?-.45:-.55)||rel>(p.ai?1.1:1.45))return false;
+  if(rel<(p.ai?-.35:-.55)||rel>(p.ai?.55:1.45))return false;
   if(Math.abs(b.x-p.x)>reachOf(p))return false;
   if(b.z>3.3||b.z<.04)return false;
   return true;
@@ -939,9 +936,9 @@ function aiAim(p,opp,type){
 function aiShot(p,opp){
   const b=S.ball;if(b.z>2.2)return 'smash';
   const oppNet=Math.abs(opp.y)<6.5,r=Math.random();
-  if(b.bounces===0)return r<.6?'flat':'slice';
+  if(b.bounces===0)return 'flat';
   if(oppNet)return r<.3?'lob':'flat';
-  return r<.62?'flat':r<.94?'slice':'lob';
+  return r<.93?'flat':'lob';
 }
 function moveTo(p,tx,ty,dt,f){
   const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy);const sp=moveSpeed(p)*(f||1);
@@ -956,7 +953,7 @@ function aiUpdate(p,dt){
     moveTo(p,p.spot.x,p.spot.y,dt,.9);
     if(S.players[S.server]===p){
       if(S.state==='serve_ready'&&arrived(p)&&(S.bounceT||0)>1.35)toss(p);
-      if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random();press(p,S.serveNo===2?(r<.6?'lob':'slice'):(r<.55?'flat':r<.85?'slice':'lob'));}
+      if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random();press(p,S.serveNo===2?(r<.7?'lob':'flat'):(r<.8?'flat':'lob'));}
     }
     return;
   }
@@ -1020,7 +1017,7 @@ function update(dt){
     const v=Math.hypot(p.vx,p.vy);if(v>.5)p.phase+=dt*(6+v*1.3);
     if(p.anim){p.anim.t+=dt;if(p.anim.t>=p.anim.dur){p.anim=null;p.swing=-1;}}
     // step into the ball just before contact, so the racket meets it
-    if(p.armed&&!p.armed.serve&&S.state==='rally'&&b.lastHitter!==p.side&&b.vy*p.side>0){
+    if(!p.ai&&p.armed&&!p.armed.serve&&S.state==='rally'&&b.lastHitter!==p.side&&b.vy*p.side>0){
       const tc=(p.y-b.y)/b.vy;if(tc>0&&tc<.28){const want=(b.x+b.vx*tc)-.78*p.hand*(p.side<0?1:-1);const d=clamp(want-p.x,-.35,.35);p.x+=d*Math.min(1,dt*5);}}
     if(p.flash>0)p.flash-=dt;
     if(p.armed){

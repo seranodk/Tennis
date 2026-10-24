@@ -1,6 +1,6 @@
 # Tennis
 
-Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v2.6.
+Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v2.7.
 
 **Spil:** åbn `index.html`, eller slå GitHub Pages til (Settings → Pages → Branch `main`, mappe `/root`). På mobilen kan siden føjes til hjemmeskærmen og kører så i fuld skærm som en app.
 
@@ -17,9 +17,9 @@ Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kamera
 ## Styring
 | Knap | Tastatur | Slag |
 |---|---|---|
-| B | J · Z · Mellemrum | Flad / hård serv |
-| A | K · X | Slice / skruet serv |
-| Y | U · C · L | Lob / sikker kick-serv |
+| B | J · Z · Mellemrum | Hårdt slag (hold for mere fart) / hård serv |
+
+| Y | K · X · L · C | Lob / sikker kick-serv |
 
 Pile eller WASD flytter spilleren og sigter: op slår dybt, ned slår kort, venstre/højre mod siden. P eller Esc pauser, F giver fuld skærm. Gamepad virker også.
 
