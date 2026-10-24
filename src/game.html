@@ -1,4 +1,4 @@
-<title>Tennis v3.5</title>
+<title>Tennis v3.6</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -367,7 +367,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v3.5';
+const VERSION='v3.6';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -712,7 +712,11 @@ const POSES=(()=>{
     PZ({crouch:1,bob:-1.5,turn:.85,lean:2,lf:[-4,-1],rf:[3,-.5],rh:[-1,2],lh:[-5,6],rac:1.2,cross:true}),    // swing down across
     PZ({crouch:3,turn:.8,lean:1.5,lf:[-4.5,0],rf:[3.5,0],rh:[-5,9],lh:[-6,6],rac:2.4,cross:true}),           // land, follow-through
     PZ({crouch:2.5,lf:[-5,0],rf:[5,0],rh:[3.5,7],lh:[1,7.5],rac:-1.2,two:true})];
-  return {ready,fh,bh,sv,run,sm,sideP:side(1),sideN:side(-1)};
+  const bo=[
+    PZ({crouch:3,lean:.6,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,11.5],rac:1.1}),     // ball in the hand at waist height
+    PZ({crouch:3.6,lean:.9,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,13.5],rac:1.1}),   // pushes it down
+    PZ({crouch:3,lean:.6,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,10.5],rac:1.1})];    // hand waits for it to come back up
+  return {ready,fh,bh,sv,run,sm,bo,sideP:side(1),sideN:side(-1)};
 })();
 function ik(S0,E,a,b,bend){let dx=E[0]-S0[0],dy=E[1]-S0[1];let d=Math.hypot(dx,dy);const m=a+b-.05;if(d>m){dx*=m/d;dy*=m/d;d=m;}if(d<.05)d=.05;
   const ca=clamp((a*a+d*d-b*b)/(2*a*d),-1,1);const ang=Math.atan2(dy,dx)+bend*Math.acos(ca);return [S0[0]+Math.cos(ang)*a,S0[1]+Math.sin(ang)*a];}
@@ -727,12 +731,13 @@ function poseSprite(H,ch,front,ps,noRacket){
     for(let y=y0;y<=y1;y++){let a=1e9,b=-1e9;const yy=y+.5;for(let i=0;i<P.length;i++){const p1=P[i],p2=P[(i+1)%P.length];if((p1[1]<=yy)!==(p2[1]<=yy)){const x=p1[0]+(yy-p1[1])/(p2[1]-p1[1])*(p2[0]-p1[0]);a=Math.min(a,x);b=Math.max(b,x);}}
       if(b>a)g.fillRect(Math.round(a),y,Math.max(1,Math.round(b)-Math.round(a)),1);}};
   const bob=ps.bob||0,hipY=-21+ps.crouch+bob,hipX=ps.lean*.35,shY=hipY-13,shX=ps.lean,sw=4.6*ps.turn+.6;
-  const RS=[shX+sw,shY+1],LS=[shX-sw,shY+1],RHp=[hipX+2.6,hipY],LHp=[hipX-2.6,hipY];
+  const fw=front?1.22:.78,hw=front?3:2.3,lfX=ps.lf[0]*fw,rfX=ps.rf[0]*fw;
+  const RS=[shX+sw,shY+1],LS=[shX-sw,shY+1],RHp=[hipX+hw,hipY],LHp=[hipX-hw,hipY];
   const head=[shX+ps.lean*.15,shY-5.2];
   const shirt=ch.shirt,shD=shade(shirt,-.25),shL=shade(shirt,.22),skinD=shade(ch.skin,-.18);
   // legs (thigh 10, shin 10.5), knees bend outward
-  const legs=()=>{for(const [hp,ft,bend] of [[LHp,ps.lf,1],[RHp,ps.rf,-1]]){const ank=[ft[0],ft[1]-1.6];let kn=ik(hp,ank,10,10,bend*mx);const mdx=(hp[0]+ank[0])/2;kn=[mdx+(kn[0]-mdx)*.28,kn[1]];   // knees bend toward/away from the camera, so only a little sideways
-      seg(hp,kn,4,ch.skin);seg(kn,ank,3.4,ch.skin);seg([ank[0],ank[1]-2],ank,3.2,'#f4f4f4');
+  const legs=()=>{for(const [hp,ft,bend] of [[LHp,[lfX,ps.lf[1]],1],[RHp,[rfX,ps.rf[1]],-1]]){const ank=[ft[0],ft[1]-1.6];let kn=ik(hp,ank,10,10,bend*mx);const mdx=(hp[0]+ank[0])/2;kn=[mdx+(kn[0]-mdx)*.28,kn[1]];   // knees bend toward/away from the camera, so only a little sideways
+      seg(hp,kn,front?3.4:4,ch.skin);seg(kn,ank,front?2.9:3.4,ch.skin);seg([ank[0],ank[1]-2],ank,3.2,'#f4f4f4');
       if(front){quad([[ft[0]-1.9,ft[1]-2.6],[ft[0]+1.9,ft[1]-2.6],[ft[0]+2.4,ft[1]+.4],[ft[0]-2.4,ft[1]+.4]],'#f6f6f6');
         quad([[ft[0]-2.4,ft[1]-.5],[ft[0]+2.4,ft[1]-.5],[ft[0]+2.4,ft[1]+.4],[ft[0]-2.4,ft[1]+.4]],'#a3a9b3');}
       else{quad([[ft[0]-2,ft[1]-2.4],[ft[0]+2,ft[1]-2.4],[ft[0]+2.1,ft[1]],[ft[0]-2.1,ft[1]]],'#f6f6f6');
@@ -791,7 +796,7 @@ function poseSprite(H,ch,front,ps,noRacket){
 function drawPose(H,ch,front,pose,noRacket){return poseSprite(H,ch,front,POSES.ready,noRacket);}
 function buildSet(ch,H,front){
   const mk=ps=>poseSprite(H,ch,front,ps,false);
-  return {ready:mk(POSES.ready),sm:POSES.sm.map(mk),run:POSES.run.map(mk),sideP:POSES.sideP.map(mk),sideN:POSES.sideN.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk)};
+  return {ready:mk(POSES.ready),sm:POSES.sm.map(mk),run:POSES.run.map(mk),sideP:POSES.sideP.map(mk),sideN:POSES.sideN.map(mk),fh:POSES.fh.map(mk),bh:POSES.bh.map(mk),sv:POSES.sv.map(mk),bo:POSES.bo.map(mk)};
 }
 let UMP=null;
 function buildCrew(){
@@ -1239,9 +1244,9 @@ function update(dt){
       }
     }
   }
-  if(b.held){const sv=S.players[S.server];b.x=sv.x+(sv.side<0?-.12:.12);b.y=sv.y-sv.side*.25;
+  if(b.held){const sv=S.players[S.server];b.x=sv.x+(sv.side<0?-.3:.3);b.y=sv.y-sv.side*.05;
     // the server bounces the ball a couple of times before the toss
-    if(S.state==='serve_ready'&&arrived(sv)){S.bounceT=(S.bounceT||0)+dt;const t=S.bounceT;b.z=t<1.2?.06+Math.abs(Math.cos(t*Math.PI/.6))*.8:.86;}
+    if(S.state==='serve_ready'&&arrived(sv)){S.bounceT=(S.bounceT||0)+dt;const t=S.bounceT;b.z=t<1.2?.06+Math.abs(Math.cos(t*Math.PI/.6))*.74:.8;}
     else{S.bounceT=0;b.z=.86;}}
   ev.bounce=0;ev.net=0;ev.cord=0;ev.wall=0;
   stepBall(b,dt,ev,S.surface);
@@ -1424,7 +1429,9 @@ function frameFor(p){
   if(p.anim){const a=p.anim,arr=sp[a.kind],n=arr.length-a.from;const i=Math.min(arr.length-1,a.from+Math.floor(a.t/a.dur*n));return arr[i];}
   const isSrv=S.players[S.server]===p;
   if(isSrv&&S.state==='toss')return b.vz>2.4?sp.sv[1]:b.vz>-1.2?sp.sv[2]:sp.sv[3];
-  if(isSrv&&S.state==='serve_ready'&&arrived(p))return sp.sv[0];
+  if(isSrv&&S.state==='serve_ready'&&arrived(p)){const t=S.bounceT||0;
+    if(t<1.2){const ph=(t%.6)/.6;return ph<.12||ph>.88?sp.bo[0]:ph<.4?sp.bo[1]:sp.bo[2];}   // in step with the ball's bounces
+    return sp.bo[0];}
   if(p.charge||(p.armed&&!p.armed.serve)){if(b.lastHitter!==p.side&&!b.held&&(b.z>2||(b.vz>0&&b.z>1.4&&Math.abs(p.y)<8)))return sp.sm[0];}
   if(p.charge)return (p.hand>0?sp.fh:sp.bh)[0];
   if(p.armed&&!p.armed.serve){const arr=p.hand>0?sp.fh:sp.bh;
