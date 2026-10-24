@@ -38,6 +38,7 @@ button:focus-visible{outline:2px solid var(--led);outline-offset:2px}
 .tbtn{pointer-events:auto;width:42px;height:42px;border-radius:6px;border:2px solid #2d3b80;background:rgba(8,12,34,.75);
   display:grid;place-items:center;font-family:var(--f-pixel);font-size:14px;color:var(--chalk)}
 .tbtn:active{transform:translateY(1px)}
+.fsCorner{position:absolute;top:calc(var(--st) + 10px);right:max(12px,var(--sr));width:38px;height:38px;z-index:2}
 #tbtns{display:flex;gap:8px}
 
 #msg{position:absolute;left:0;right:0;top:36%;text-align:center;pointer-events:none;opacity:0;transform:scale(.85);
@@ -186,7 +187,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
   <div id="hud" hidden>
     <div id="board"></div>
     <div id="tbtns">
-      <button class="tbtn" id="bFs" aria-label="Fuld skærm">[ ]</button>
+      <button class="tbtn" id="bFs" aria-label="Fuld skærm"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
       <button class="tbtn" id="bPause" aria-label="Pause">II</button>
     </div>
   </div>
@@ -202,6 +203,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
   </div>
 
   <section class="screen" id="sTitle">
+    <button class="tbtn fsCorner" id="bFs2" aria-label="Fuld skærm"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
     <div id="title">
       <h1 class="logo">TENNIS<em>16-BIT CENTER COURT</em></h1>
       <div class="menu">
@@ -211,7 +213,6 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
         <button class="mbtn" data-go="career">Karriere <span>Sæson for sæson</span></button>
         <button class="mbtn" data-go="tour">Grand Slam <span>128 spillere</span></button>
         <button class="mbtn" data-go="settings">Indstillinger <span>Kamp og styring</span></button>
-        <button class="mbtn" id="bFs2">Fuld skærm <span>[ ]</span></button>
       </div>
       <p class="ver" id="ver"></p>
       <p class="hint" id="fsHint">På iPhone: Del → "Føj til hjemmeskærm" for at spille i fuld skærm som en app.</p>
@@ -583,10 +584,10 @@ function renderWorld(intro){
   const C=s.court,A=s.alt,O=s.out,Lc=s.line,nz=s.noise, surf=S?S.surface:'hard';
   for(let sy=0;sy<BH;sy++){
     const v=(OY-(sy+.5))/F;const den=v*CP-SP;if(den>=0)continue;
-    const dy=-camZ*(CP+v*SP)/den;if(dy<=0)continue;const y=camY+dy;if(y>V.b||y<-V.b)continue;
+    const dy=-camZ*(CP+v*SP)/den;if(dy<=0)continue;const y=camY+dy;if(y>V.b||y<-60)continue;
     const d=dy*CP+camZ*SP;
     for(let sx=0;sx<BW;sx++){
-      const x=(sx+.5-OX)*d/F;if(!inShape(V,x,y))continue;
+      const x=(sx+.5-OX)*d/F;if(y>=-V.b?!inShape(V,x,y):Math.abs(x)>V.a)continue;   // floor runs on toward the camera
       let col;const ax=Math.abs(x),ay=Math.abs(y);
       const inCourt=ax<=DW&&ay<=HL;
       if(surf==='grass')col=(Math.floor((y+40)/(HL/5))%2)?A:C;else col=inCourt?C:O;
