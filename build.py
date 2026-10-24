@@ -5,11 +5,13 @@ from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 src = open(os.path.join(ROOT, 'src/game.html'), encoding='utf-8').read()
-VERSION = 'v2.4'
+import re as _re
+VERSION = _re.search(r"VERSION='(v[0-9.]+)'", src).group(1)  # single source: the game's VERSION constant
 
 # --- artifact version: page body only (the artifact host adds the skeleton)
 os.makedirs(os.path.join(ROOT, 'artifact'), exist_ok=True)
 open(os.path.join(ROOT, 'artifact/tennis.html'), 'w', encoding='utf-8').write(src)
+open(os.path.join(ROOT, f'artifact/tennis-{VERSION}.html'), 'w', encoding='utf-8').write(src)
 
 # --- GitHub Pages version
 out = os.path.join(ROOT, '.')
@@ -34,6 +36,9 @@ body = src.replace('<title>Tennis</title>', '<title>Tennis</title>', 1)
 i = body.index('</style>') + len('</style>')
 page = head + body[:i] + '\n</head>\n<body>\n' + body[i:] + '\n</body>\n</html>\n'
 open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(page)
+# every release is also kept under its own name
+os.makedirs(os.path.join(out, 'versions'), exist_ok=True)
+open(os.path.join(out, 'versions', f'tennis-{VERSION}.html'), 'w', encoding='utf-8').write(page)
 
 manifest = {
     "name": "Tennis", "short_name": "Tennis", "description": "16-bit tennisspil",

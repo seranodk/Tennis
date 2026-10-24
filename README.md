@@ -1,6 +1,6 @@
 # Tennis
 
-Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v2.4.
+Et 16-bit tennisspil til mobil og browser med SNES-tennis som forbillede: kameraet bag banen, fire slagknapper, retningsstyret sigte og rigtig tennistælling. v2.6.
 
 **Spil:** åbn `index.html`, eller slå GitHub Pages til (Settings → Pages → Branch `main`, mappe `/root`). På mobilen kan siden føjes til hjemmeskærmen og kører så i fuld skærm som en app.
 
@@ -29,3 +29,6 @@ Pile eller WASD flytter spilleren og sigter: op slår dybt, ned slår kort, vens
 
 ## Udvikling
 Kilden ligger i `src/game.html`. `python3 build.py` bygger `index.html` (GitHub-versionen) og artifakt-versionen ud fra den.
+
+## Versioner
+Hver udgave gemmes også som `versions/tennis-vX.Y.html`, og versionen står i titlen og på startskærmen.
