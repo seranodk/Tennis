@@ -1,4 +1,4 @@
-<title>Tennis v2.9</title>
+<title>Tennis v2.10</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -317,7 +317,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.9';
+const VERSION='v2.10';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -711,7 +711,7 @@ function setupPoint(snap){
   sv.spot={x:-sv.side*S.sideSign*1.2,y:sv.side*(HL+.3)};
   const box=sv.side*S.sideSign;
   rc.spot={x:box*2.7,y:rc.side*(HL+.9)};
-  for(const p of S.players){p.armed=null;p.charge=null;p.plan=null;p.react=0;p.swing=-1;p.anim=null;p.atNet=false;p.assistPlan=null;p.aiT=0;if(snap){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}}
+  for(const p of S.players){p.armed=null;p.charge=null;p.ready=false;p.plan=null;p.react=0;p.swing=-1;p.anim=null;p.atNet=false;p.assistPlan=null;p.aiT=0;if(snap){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}}
   S.ball=newBall();S.state='serve_ready';S.timer=0;updateBoard();
 }
 
@@ -799,7 +799,7 @@ function handFor(p){const b=S.ball;let bx=b.x;
   const rel=bx-p.x;return (p.side<0?rel>=0:rel<=0)?1:-1;}
 function press(p,type){
   const b=S.ball;
-  if(S.state==='serve_ready'&&S.players[S.server]===p){if(!p.ai&&!arrived(p)){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}if(arrived(p))toss(p);return;}
+  if(S.state==='serve_ready'&&S.players[S.server]===p){if(!S.players[1-S.server].ready)return;if(!p.ai&&!arrived(p)){p.x=p.spot.x;p.y=p.spot.y;p.vx=p.vy=0;}if(arrived(p))toss(p);return;}
   if(S.state==='toss'&&S.players[S.server]===p){
     if(!p.ai&&b.z>1.0){doServe(p,type);return;}   // human: hit right away whenever the ball is up
     p.armed={type,t:.9,serve:true};return;}
@@ -825,7 +825,15 @@ function canHit(p){
   const b=S.ball;
   if(b.held||b.lastHitter===p.side||b.bounces>=2||(b.serve&&b.bounces===0))return false;
   const rel=(b.y-p.y)*p.side;
-  if(rel<(p.ai?-.35:-.5)||rel>(p.ai?.55:1.0))return false;
+  if(p.ai){
+    // the computer only hits a ball that is actually at its racket: beside it on the racket side, level with it, at reachable height
+    if(rel<-.3||rel>.3)return false;
+    if(b.z<.04||b.z>2.7)return false;
+    const hand=handFor(p),rx=p.x+.7*hand*(p.side<0?1:-1);
+    if(Math.abs(b.x-rx)>.58+p.ch.spd*.1)return false;
+    return true;
+  }
+  if(rel<-.5||rel>1.0)return false;
   if(Math.abs(b.x-p.x)>reachOf(p))return false;
   if(b.z>3.3||b.z<.04)return false;
   return true;
@@ -946,7 +954,7 @@ function planContact(p,forHuman){
     if(c.bounces===1&&c.z>.28&&c.z<1.45)ok=true;
     else if(c.bounces===0&&allowVol&&Math.abs(c.y)<8&&c.z>.4&&c.z<3.1)ok=true;
     if(!ok)continue;
-    const off=.62;const sx1=c.x-off,sx2=c.x+off;const sx=Math.abs(sx1-p.x)<Math.abs(sx2-p.x)?sx1:sx2;
+    const off=.7;const sx1=c.x-off,sx2=c.x+off;const sx=Math.abs(sx1-p.x)<Math.abs(sx2-p.x)?sx1:sx2;
     const dist=Math.hypot(sx-p.x,c.y-p.y);const need=dist/spd+.05;
     const cand={x:sx,y:c.y,t,bx:c.x,need};
     if(need<=t){if(!best){best=cand;if(c.bounces===1&&c.z<1.1&&c.vz<0)break;}else break;}
@@ -981,9 +989,9 @@ function steer(p,dvx,dvy,dt){const k=Math.min(1,dt*38);p.vx+=(dvx-p.vx)*k;p.vy+=
 function aiUpdate(p,dt){
   const b=S.ball,L=p.L,opp=S.players[p.side<0?1:0];
   if(S.state==='serve_ready'||S.state==='toss'){
-    moveTo(p,p.spot.x,p.spot.y,dt,.5);
+    moveTo(p,p.spot.x,p.spot.y,dt,.6);
     if(S.players[S.server]===p){
-      if(S.state==='serve_ready'&&arrived(p)&&(S.bounceT||0)>1.35)toss(p);
+      if(S.state==='serve_ready'&&arrived(p)&&S.players[1-S.server].ready&&(S.bounceT||0)>1.35)toss(p);
       if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random();press(p,S.serveNo===2?(r<.7?'lob':'flat'):(r<.8?'flat':'lob'));}
     }
     return;
@@ -1010,11 +1018,11 @@ function aiUpdate(p,dt){
 function humanUpdate(p,dt){
   const b=S.ball,sp=moveSpeed(p);
   if(S.state==='serve_ready'&&S.players[S.server]===p){
-    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.5);return;}
+    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.6);return;}
     const sgn=-p.side*S.sideSign;const lo_=sgn>0?.15:-(SW-.4),hi=sgn>0?SW-.4:-.15;
     const nx=clamp(p.x+inp.x*sp*.5*dt,lo_,hi);p.vx=(nx-p.x)/dt;p.vy=0;p.x=nx;p.spot.x=nx;p.x-=p.vx*dt;return;
   }
-  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.5);return;}
+  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.6);return;}
   if(S.state==='toss'&&S.players[S.server]===p){steer(p,0,0,dt);
     // steer the landing spot inside the service box while the ball is in the air
     const box=p.side*S.sideSign,a=S.aim;if(a){a.x+=inp.x*7*dt;a.d+=inp.y*7*dt;
@@ -1033,7 +1041,7 @@ function humanUpdate(p,dt){
   const m=Math.hypot(dvx,dvy);if(m>sp){dvx*=sp/m;dvy*=sp/m;}
   steer(p,dvx,dvy,dt);
 }
-function arrived(p){return Math.hypot(p.x-p.spot.x,p.y-p.spot.y)<.12;}
+function arrived(p){return !!p.spot&&Math.hypot(p.x-p.spot.x,p.y-p.spot.y)<.12;}
 
 /* ================= main update ================= */
 const ev={};
@@ -1041,6 +1049,7 @@ function update(dt){
   const b=S.ball;
   S.timer+=dt;
   for(const p of S.players){
+    if(S.state==='serve_ready'&&arrived(p))p.ready=true;   // in place once = ready to receive/serve
     if(p.ai)aiUpdate(p,dt);else humanUpdate(p,dt);
     p.x+=p.vx*dt;p.y+=p.vy*dt;
     p.y=p.side<0?clamp(p.y,-HL-5,-.7):clamp(p.y,.7,HL+5);
