@@ -1,4 +1,4 @@
-<title>Tennis v3.3</title>
+<title>Tennis v3.4</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -317,7 +317,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
         </div>
       </div>
       <div class="card"><h3>SIGTE OG TIMING</h3>
-        <p>Slaget går af når du slipper knappen. Slip lige før bolden når dig: rammer du rent, går bolden hvor du sigter. Slipper du for tidligt, trækkes bolden på tværs og kan gå ud; for sent, skubbes den den anden vej eller i nettet; alt for tidligt og du svinger forbi. Hold retning mens du slår: venstre/højre mod siden, op dybt, ned kort.</p>
+        <p>Retningen bestemmer hvor bolden går, uanset hvor du står: venstre sender bolden ned langs venstre side, højre langs højre side, op slår dybt, ned slår kort, og ned + til siden giver en skarp vinkel. Uden retning går bolden diagonalt. Retningen tæller også, hvis du lige har sluppet den. Slaget går af når du slipper knappen: rammer du rent, lander bolden hvor du sigter; for tidligt trækker den lidt på tværs, for sent skubber den den anden vej eller i nettet.</p>
       </div>
       <div class="card"><h3>SERV</h3>
         <p>Du server fra baglinjen over i feltet på skrå. Flyt dig langs baglinjen, og tryk en slagknap for at kaste bolden op. Mens bolden er i luften styrer du den gule markering i feltet; tryk igen for at serve. Ramt nær toppen af kastet og uden at gå efter linjerne går langt de fleste server ind.</p>
@@ -367,7 +367,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v3.3';
+const VERSION='v3.4';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -891,7 +891,7 @@ function pollPad(){for(const I of IN)I.gx=I.gy=0;const pads=navigator.getGamepad
       if(!now&&was&&i!==9&&S&&S.mode==='play'&&!paused)humanRelease(GPMAP[i],idx);
       if(now&&!was){if(i===9){if(S&&S.mode==='play'&&!S.over)paused?resume():pause();}else if(S&&S.mode==='play'&&!paused){readAxes();humanPress(GPMAP[i],idx);}}}
     if(!twoP())break;}}
-function readAxes(){keyAxes();for(const I of IN){let x=I.kx||I.gx||I.tx,y=I.ky||I.gy||I.ty;const m=Math.hypot(x,y);if(m>1){x/=m;y/=m;}I.x=x;I.y=y;}}
+function readAxes(){keyAxes();for(const I of IN){let x=I.kx||I.gx||I.tx,y=I.ky||I.gy||I.ty;const m=Math.hypot(x,y);if(m>1){x/=m;y/=m;}I.x=x;I.y=y;if(m>.3){I.lx=x;I.ly=y;I.lt=performance.now();}}}
 
 /* ================= physics ================= */
 function stepBall(b,dt,ev,surf){
@@ -982,12 +982,17 @@ function doHit(p,type,err,hold,fromSwing){
   const sh=SHOT[type];
   const reach=reachOf(p), stretch=clamp(Math.abs(b.x-p.x)/reach,0,1);
   const rel=b.x-p.x;p.hand=(p.side<0?rel>=0:rel<=0)?1:-1;
-  let tx,depth;const maxX=SW-.42;
+  let tx,depth,aimed=false;const maxX=SW-.42;
   if(p.ai){const A=aiAim(p,opp,type);tx=A[0];depth=A[1];}
   else{
-    const I=IN[p.idx],ax=I.x,ay=I.y*-p.side;   // ay>0 = deep, whichever end you play from
-    tx=Math.abs(ax)>.22?ax*(SW-1.05):(-Math.sign(p.x||1)*1.1+(Math.random()-.5)*1.6);
-    depth=ay>.3?HL-1.7:ay<-.3?SL-.9:HL-2.6;
+    // direction decides where the ball goes, like Super Tennis: left/right = towards that sideline from anywhere on the court.
+    // A direction let go of just before contact still counts.
+    const I=IN[p.idx];let ax=I.x,ayR=I.y;if(Math.hypot(ax,ayR)<.25&&performance.now()-(I.lt||0)<320){ax=I.lx;ayR=I.ly;}
+    const ay=ayR*-p.side;   // ay>0 = deep, whichever end you play from
+    aimed=Math.abs(ax)>.22;
+    tx=aimed?Math.sign(ax)*(SW-.6)*Math.min(1,.55+Math.abs(ax)*.6):(-Math.sign(p.x||1)*1.5+(Math.random()-.5)*1.2);
+    depth=ay>.3?HL-1.6:ay<-.3?SL-.9:HL-2.4;
+    if(aimed&&ay<-.3){tx=Math.sign(ax)*(SW-.35);depth=SL-1.3;}   // short and sideways: sharp angle
     if(type==='lob')depth=ay<-.3?HL-2.6:HL-1.1;
     if(type==='smash')depth=ay<-.3?SL:HL-2.2;
     if(volley&&ay<-.3)depth=3.2;
@@ -995,7 +1000,7 @@ function doHit(p,type,err,hold,fromSwing){
   // power: human = how long the button was held (0-0.7 s); computer varies its pace
   const pw=p.ai?clamp((aiSt(p).pow*.7+Math.random()*.45-.15)*(1-stretch),0,1):clamp(((hold||0)-.12)/.6,0,1);
   const pull=err*1.5*(p.hand>0?1:-1)*(p.side<0?-1:1);
-  tx+=pull*(p.ai?.6:1.7);if(!p.ai&&err>0)depth+=err*1.1;
+  tx+=pull*(p.ai?.6:aimed?.45:.6);if(!p.ai&&err>0)depth+=err*(aimed?.6:1.1);
   const sweet=Math.abs(err)<.2&&stretch<.75;
   let sig=(.22+(1-ch.ctl)*.55+stretch*.45+Math.abs(err)*.12)*sh.sc*(p.ai?p.L.sc:.62)*(1+pw*.75);
   tx+=gauss()*sig*.9;depth+=gauss()*sig*.8+pw*.6;
