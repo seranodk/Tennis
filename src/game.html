@@ -1,4 +1,4 @@
-<title>Tennis v2.11</title>
+<title>Tennis v2.12</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -317,7 +317,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v2.11';
+const VERSION='v2.12';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -785,8 +785,8 @@ function stepBall(b,dt,ev,surf){
     if(ev){ev.bounce=b.bounces;ev.bx=b.x;ev.by=b.y;}
   }
   if(b.z<BR){b.z=BR;b.vx*=1-2*dt;b.vy*=1-2*dt;}
-  if(b.y<-26||b.y>17.3){b.y=clamp(b.y,-26,17.3);b.vy=-b.vy*.3;b.vx*=.5;}
-  if(Math.abs(b.x)>12.4){b.x=clamp(b.x,-12.4,12.4);b.vx=-b.vx*.3;}
+  if(b.y<-26||b.y>17.3){b.y=clamp(b.y,-26,17.3);b.vy=-b.vy*.3;b.vx*=.5;if(ev)ev.wall=1;}
+  if(Math.abs(b.x)>12.4){b.x=clamp(b.x,-12.4,12.4);b.vx=-b.vx*.3;if(ev)ev.wall=1;}
 }
 const simB={};
 function simCopy(b){for(const k in b)if(k!=='trail')simB[k]=b[k];return simB;}
@@ -831,6 +831,7 @@ function tryContact(p){
 function canHit(p){
   const b=S.ball;
   if(b.held||b.lastHitter===p.side||b.bounces>=2||(b.serve&&b.bounces===0))return false;
+  if(b.vy*p.side<=0)return false;   // the ball must be travelling toward this player
   const rel=(b.y-p.y)*p.side;
   if(p.ai){
     // the computer only hits a ball that is actually at its racket: beside it on the racket side, level with it, at reachable height
@@ -1004,7 +1005,7 @@ function aiUpdate(p,dt){
     return;
   }
   if(S.state!=='rally'){steer(p,0,0,dt);return;}
-  const incoming=b.lastHitter!==p.side&&!b.held&&(b.vy*p.side>0||Math.sign(b.y)===p.side);
+  const incoming=b.lastHitter!==p.side&&!b.held&&b.vy*p.side>0;
   if(incoming&&b.bounces<2){
     if(!p.plan){p.react+=dt;if(p.react>=L.react){p.plan=planContact(p,false);if(p.plan){p.plan.press=Math.max(.05,.14+gauss()*L.tsig);p.plan.age=0;
       if(p.plan.leave&&Math.random()<L.leave)p.plan.skip=true;}}}
@@ -1088,7 +1089,7 @@ function update(dt){
     // the server bounces the ball a couple of times before the toss
     if(S.state==='serve_ready'&&arrived(sv)){S.bounceT=(S.bounceT||0)+dt;const t=S.bounceT;b.z=t<1.2?.06+Math.abs(Math.cos(t*Math.PI/.6))*.8:.86;}
     else{S.bounceT=0;b.z=.86;}}
-  ev.bounce=0;ev.net=0;ev.cord=0;
+  ev.bounce=0;ev.net=0;ev.cord=0;ev.wall=0;
   stepBall(b,dt,ev,S.surface);
   const sv=S.players[S.server];
   if(S.state==='toss'){
@@ -1096,6 +1097,9 @@ function update(dt){
     if(b.z<.75&&b.vz<0){b.held=true;S.state='serve_ready';S.timer=.3;sv.armed=null;sv.aiT=0;}
   }
   if(S.state==='rally'&&ev.bounce)onBounce(b);
+  if(S.state==='rally'&&ev.wall){const hit=b.lastHitter;
+    if(b.bounces===0)point(hit<0?1:0,'UDE');   // never landed: out
+    else point(hit<0?0:1,'');}                 // landed in and ran past the player: winner
   if(S.state==='dead'||S.state==='fault'){if(S.timer>(S.state==='fault'?1.15:1.7))afterDead();}
   b.trail.push(b.x,b.y,b.z);if(b.trail.length>15)b.trail.splice(0,3);
 }
