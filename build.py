@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 src = open(os.path.join(ROOT, 'src/game.html'), encoding='utf-8').read()
-VERSION = 'v2.2'
+VERSION = 'v2.3'
 
 # --- artifact version: page body only (the artifact host adds the skeleton)
 os.makedirs(os.path.join(ROOT, 'artifact'), exist_ok=True)
