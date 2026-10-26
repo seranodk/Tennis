@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v3.6)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v3.7)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v3.6</title>
+<title>Tennis v3.7</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -341,12 +341,12 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
       </div>
       <div class="card"><h3>TASTATUR OG CONTROLLER</h3>
         <div class="keys">
-          <kbd>Pile / WASD</kbd><span>Løb og sigt</span>
-          <kbd>J · Z · Mellemrum</kbd><span>B – Hårdt slag</span>
-          <kbd>K · X · L · C</kbd><span>Y – Lob</span>
+          <kbd>Piletaster</kbd><span>Løb og sigt (WASD virker også)</span>
+          <kbd>Shift</kbd><span>B – Hårdt slag</span>
+          <kbd>-</kbd><span>Y – Lob</span>
           <kbd>P · Esc</kbd><span>Pause</span>
           <kbd>F</kbd><span>Fuld skærm</span>
-          <kbd>2 spillere</kbd><span>Player 1: WASD + G (hårdt) / H (lob). Player 2: pile + K (hårdt) / L (lob). To controllere virker også; på mobil får Player 2 knapper i toppen.</span>
+          <kbd>2 spillere</kbd><span>Player 1: piletaster + højre Shift (hårdt) / - (lob). Player 2: WASD + G eller venstre Shift (hårdt) / H (lob). To controllere virker også; på mobil får Player 2 knapper i toppen.</span>
           <kbd>Gamepad</kbd><span>Stik/d-pad, knapperne som på en SNES-pad, Start = pause</span>
         </div>
       </div>
@@ -384,7 +384,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v3.6';
+const VERSION='v3.7';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -855,13 +855,14 @@ function setupPoint(snap){
 const mkIn=()=>({x:0,y:0,kx:0,ky:0,tx:0,ty:0,gx:0,gy:0});
 const IN=[mkIn(),mkIn()],inp=IN[0];
 const keys=new Set();const held=[{flat:0,lob:0},{flat:0,lob:0}];
-const KEYMAP={KeyJ:'flat',KeyZ:'flat',Space:'flat',KeyK:'lob',KeyX:'lob',KeyU:'lob',KeyC:'lob',KeyL:'lob',KeyV:'lob'};
-// two players on one keyboard: P1 = WASD + G/H, P2 = arrows + K/L
-const KEYMAP2={KeyG:[0,'flat'],Space:[0,'flat'],KeyH:[0,'lob'],KeyK:[1,'flat'],Enter:[1,'flat'],KeyL:[1,'lob'],ShiftRight:[1,'lob']};
+// Player 1: arrows + Shift (hard shot) + '-' (lob). On a Danish keyboard the '-' key reports Slash.
+const KEYMAP={ShiftLeft:'flat',ShiftRight:'flat',Minus:'lob',Slash:'lob',NumpadSubtract:'lob',KeyJ:'flat',Space:'flat',KeyK:'lob'};
+// two players on one keyboard: P1 = arrows + right Shift / '-', P2 = WASD + G / H
+const KEYMAP2={ShiftRight:[0,'flat'],Minus:[0,'lob'],Slash:[0,'lob'],NumpadSubtract:[0,'lob'],Enter:[0,'flat'],KeyG:[1,'flat'],ShiftLeft:[1,'flat'],KeyH:[1,'lob']};
 const twoP=()=>!!(S&&S.twoP&&S.mode==='play');
 function keyShot(code){if(twoP()){const m=KEYMAP2[code];return m?{i:m[0],t:m[1]}:null;}const t=KEYMAP[code];return t?{i:0,t}:null;}
 addEventListener('keydown',e=>{
-  if(e.code.startsWith('Arrow')||e.code==='Space')e.preventDefault();
+  if(e.code.startsWith('Arrow')||e.code==='Space'||e.code==='Slash'||e.code==='Minus')e.preventDefault();
   
   if(INTRO){skipIntro();return;}
   if(e.repeat)return;
@@ -875,7 +876,7 @@ addEventListener('keyup',e=>{keys.delete(e.code);const k=keyShot(e.code);if(k){h
 addEventListener('blur',()=>{keys.clear();for(const h of held)h.flat=h.lob=0;});
 function keyAxes(){
   const K=c=>keys.has(c)?1:0;
-  if(twoP()){IN[0].kx=K('KeyD')-K('KeyA');IN[0].ky=K('KeyW')-K('KeyS');IN[1].kx=K('ArrowRight')-K('ArrowLeft');IN[1].ky=K('ArrowUp')-K('ArrowDown');return;}
+  if(twoP()){IN[0].kx=K('ArrowRight')-K('ArrowLeft');IN[0].ky=K('ArrowUp')-K('ArrowDown');IN[1].kx=K('KeyD')-K('KeyA');IN[1].ky=K('KeyW')-K('KeyS');return;}
   IN[0].kx=(K('ArrowRight')||K('KeyD'))-(K('ArrowLeft')||K('KeyA'));IN[0].ky=(K('ArrowUp')||K('KeyW'))-(K('ArrowDown')||K('KeyS'));IN[1].kx=IN[1].ky=0;}
 /* touch controls; player 2's set is the same layer turned 180° at the top of the screen */
 function bindTouch(root,idx){
