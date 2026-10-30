@@ -1,4 +1,4 @@
-<title>Tennis v4.0</title>
+<title>Tennis v4.1</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -369,7 +369,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.0';
+const VERSION='v4.1';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -409,7 +409,7 @@ const LVT=[
  {react:.18,spd:.97,tsig:.2,margin:1.0,sc:.95,net:.11,leave:.72,fault:.06,err:.08},
  {react:.12,spd:1.04,tsig:.13,margin:.78,sc:.76,net:.18,leave:.9,fault:.04,err:.05}];
 function lvp(l){l=Math.max(1,Math.min(4,l));const i=Math.min(2,Math.floor(l-1)),t=l-1-i,a=LVT[i],b=LVT[i+1],o={};for(const k in a)o[k]=a[k]+(b[k]-a[k])*t;return o;}
-const SHOT={drop:{T:1.15,g:9.8,m:.35,sc:.8},flat:{T:.76,g:28,m:1.35,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
+const SHOT={drop:{T:1.15,g:9.8,m:.35,sc:.8},flat:{T:.9,g:24,m:1.9,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
 
 /* ================= settings / storage ================= */
 const DEF={board:'full',court:'hard',exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:0,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
@@ -1095,7 +1095,7 @@ function doServe(p,type){
 }
 
 /* ================= AI ================= */
-function moveSpeed(p){return 6+p.ch.spd*2.4;}
+function moveSpeed(p){return 5.4+p.ch.spd*2.1;}
 function planContact(p,forHuman){
   const b=S.ball;const c=simCopy(b);
   const spd=moveSpeed(p)*(forHuman?1:p.L.spd);
@@ -1234,8 +1234,7 @@ function update(dt){
       const tc=(p.y-b.y)/b.vy;
       if(tc>0&&tc<.45){const bx=b.x+b.vx*tc;
         // stepping away for a better angle never takes the ball out of reach once the shot is under way
-        const lim=reachOf(p)-.25;if(p.x<bx-lim){p.x=bx-lim;p.vx=Math.max(p.vx,0);}if(p.x>bx+lim){p.x=bx+lim;p.vx=Math.min(p.vx,0);}
-        if(p.armed&&tc<.28){const want=bx-.78*p.hand*(p.side<0?1:-1);const d=clamp(want-p.x,-.35,.35);p.x+=d*Math.min(1,dt*5);}}}
+        if(p.armed&&tc<.28&&Math.abs(bx-p.x)<reachOf(p)){const want=bx-.78*p.hand*(p.side<0?1:-1);const d=clamp(want-p.x,-.35,.35);p.x+=d*Math.min(1,dt*5);}}}
     if(p.flash>0)p.flash-=dt;
     if(p.charge){p.charge.t+=dt;p.hand=handFor(p);
       // holding on too long: the swing goes anyway once the ball is level with you (late)
