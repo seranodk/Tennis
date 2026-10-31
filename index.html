@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.7)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.8)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v4.7</title>
+<title>Tennis v4.8</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -392,7 +392,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.7';
+const VERSION='v4.8';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -1108,7 +1108,7 @@ function doServe(p,type){
   let margin={flat:.1,slice:.16,lob:.55}[type],netFault=false;
   if(fault){
     const r=Math.random();
-    if(r<.42)depth=SL+.25+Math.random()*.8;
+    if(r<.42)depth=SL+.6+Math.random()*.9;
     else if(r<.78){if(t.kind==='t')tx=-t.box*(.2+Math.random()*.45);else tx=t.box*(SW+.2+Math.random()*.6);}
     else netFault=true;
   }else{
@@ -1123,6 +1123,8 @@ function doServe(p,type){
   let axc=0,txAim=tx;
   if(type==='slice'){axc=t.box*2.6;txAim=tx-.5*axc*T*T*.9;}
   let v=solveShot(b,txAim,ty,T,g,margin);
+  if(fault&&!netFault){const tn=-b.y/v[1];const T0=(v[2]+Math.sqrt(v[2]*v[2]+2*g*Math.max(0,b.z-BR)))/g;const ly=b.y+v[1]*T0,lx=b.x+v[0]*T0;   // make sure a planned fault really lands out
+    if(Math.abs(ly)<=SL+.1&&Math.abs(lx)<=SW+.1&&lx*t.box>-.1){const k=(SL+.7-Math.abs(b.y))/Math.max(.1,Math.abs(ly-b.y));v[0]*=k;v[1]*=k;}}
   if(netFault){const tn=-b.y/v[1];const xn=b.x+v[0]*tn;v[2]=(netH(xn)-.14-b.z+.5*g*tn*tn)/tn;}
   b.vx=v[0];b.vy=v[1];b.vz=v[2];b.g=g;b.ax=axc;b.spin=type==='lob'?'top':type;b.bounces=0;b.lastHitter=p.side;b.serve=true;b.netcord=false;b.netHit=false;
   S.hk=null;startAnim(p,'sv',4,.46);S.state='rally';S.rally=0;S.timer=0;
@@ -1299,7 +1301,8 @@ function update(dt){
     if(b.z<.75&&b.vz<0){b.held=true;S.state='serve_ready';S.timer=.3;sv.armed=null;sv.aiT=0;}
   }
   if(S.state==='rally'&&ev.bounce)onBounce(b);
-  if(S.state==='rally'&&ev.wall){const hit=b.lastHitter;
+  if(S.state==='rally'&&ev.wall&&b.serve&&b.bounces===0){fault(b.netHit?'NET':'FEJL');}   // a serve can never lose the point outright: no bounce = fault
+  else if(S.state==='rally'&&ev.wall){const hit=b.lastHitter;
     if(b.bounces===0)point(hit<0?1:0,'UDE');   // never landed: out
     else point(hit<0?0:1,'');}                 // landed in and ran past the player: winner
   if(S.train&&S.state==='feedwait'&&S.timer>1.1)trainFeed();
@@ -1340,7 +1343,7 @@ function fault(txt){
   else{S.serveNo=1;S.state='dead';S.timer=-.2;S.pendingWin=1-S.server;call('DOBBELTFEJL','');}
 }
 function letServe(){S.state='fault';S.timer=0;call('LET','');}
-function point(w,txt){S.state='dead';S.timer=0;S.pendingWin=w;if(txt)call(txt,'');
+function point(w,txt){if(S.ball&&S.ball.serve&&S.ball.bounces===0&&S.state==='rally'){return fault(txt==='NET'?'NET':'FEJL');}S.state='dead';S.timer=0;S.pendingWin=w;if(txt)call(txt,'');
   if(txt==='UDE'){hawkShow();}
   if(!txt&&S.hk&&S.hk.m>=0&&S.hk.rally===S.rally)hawkShow();}
 function afterDead(){
