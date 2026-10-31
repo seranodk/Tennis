@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.6)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.7)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v4.6</title>
+<title>Tennis v4.7</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,6 +129,13 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 .seg button.on{background:var(--led);color:#1a1200;border-color:var(--led)}
 .row2{display:flex;gap:10px;flex-wrap:wrap}
 .row2 .mbtn{flex:1 1 140px}
+.card.compact{padding:10px 12px;display:grid;gap:8px}
+.card.compact .opts{gap:8px}
+.card.compact .opt{grid-template-columns:1fr;gap:4px}
+.card.compact .opt label{font-size:12px}
+.card.compact .seg button{padding:6px 6px;font-size:12px;min-width:44px}
+.row2.compact .mbtn{padding:10px 14px;font-size:14px}
+#sSettings .wrap{gap:10px}
 .tours{display:grid;gap:8px}
 .tour{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:10px 12px;border-radius:6px;border:2px solid #26336f;background:#0d1640}
 .tour.sel{border-color:var(--led)}
@@ -261,11 +268,8 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
   <section class="screen dim" id="sSettings" hidden>
     <div class="wrap">
       <h2>Indstillinger</h2>
-      <p class="hint">Gælder både opvisning og Grand Slam. I Grand Slam bestemmer turneringen underlaget.</p>
-      <div class="card"><h3>KAMP</h3><div class="opts" id="optsMatch"></div></div>
-      <div class="card"><h3>SPIL</h3><div class="opts" id="optsPlay"></div></div>
-      <div class="card"><h3>STYRING</h3><button class="mbtn" data-go="help" style="width:100%">Vejledning <span>Slag, timing, serv og taster</span></button></div>
-      <div class="row2"><button class="mbtn primary" data-go="title">Gem og tilbage</button></div>
+      <div class="card compact"><div class="opts" id="optsMatch"></div><div class="opts" id="optsPlay"></div></div>
+      <div class="row2 compact"><button class="mbtn" data-go="help">Styring</button><button class="mbtn primary" data-go="title">Gem</button></div>
     </div>
   </section>
 
@@ -388,7 +392,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.6';
+const VERSION='v4.7';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -439,7 +443,7 @@ function load(){try{const a=JSON.parse(localStorage.getItem('tennis.cfg2')||'nul
   const b=JSON.parse(localStorage.getItem('tennis.prog2')||'null');if(b&&b.pts&&b.cups)PROG=b;}catch(e){}}
 function save(){try{localStorage.setItem('tennis.cfg2',JSON.stringify(CFG));localStorage.setItem('tennis.prog2',JSON.stringify(PROG));}catch(e){}}
 load();
-CFG.assist=0;CFG.tiebreak=1;CFG.first='rnd';CFG.sets=3;   // every match is best of three
+CFG.assist=0;CFG.tiebreak=1;CFG.first='rnd';CFG.speed=0;if(!CFG.v46){CFG.sets=1;CFG.v46=1;}
 if(!CFG.tourMe||typeof CFG.tourMe!=='object')CFG.tourMe={m:0,w:0};
 if(!CFG.exMe||typeof CFG.exMe!=='object')CFG.exMe={m:0,w:0};if(!CFG.exOpp||typeof CFG.exOpp!=='object')CFG.exOpp={m:-1,w:-1};
 
@@ -1791,12 +1795,12 @@ function seg(label,key,vals,after,note){
 }
 function buildSettings(){
   const m=$('#optsMatch');m.innerHTML='';
+  m.appendChild(seg('Sæt (opvisning og hurtig kamp)','sets',[[1,'1 sæt'],[3,'Bedst af 3'],[5,'Bedst af 5']]));
   m.appendChild(seg('Partier pr. sæt','games',[[2,'2'],[4,'4'],[6,'6']]));
-  m.appendChild(seg('Underlag','court',[['hard','Hardcourt'],['ao','Blå hardcourt'],['clay','Grus'],['grass','Græs']],null,'Opvisning og hurtig kamp'));
+  m.appendChild(seg('Underlag','court',[['hard','Hard'],['ao','Blå hard'],['clay','Grus'],['grass','Græs']]));
   const p=$('#optsPlay');p.innerHTML='';
-  p.appendChild(seg('Niveau','level',[[1,'Let'],[2,'Normal'],[3,'Svær'],[4,'Pro']],null,'I Grand Slam stiger det med modstanderens rangering'));
-  p.appendChild(seg('Tempo','speed',[[0,'Normal'],[1,'Hurtig'],[2,'Turbo']]));
-  p.appendChild(seg('Pointtavle','board',[['full','Fuld'],['mini','Minimal']],null,'Minimal: kun stillingen, som på SNES'));
+  p.appendChild(seg('Niveau','level',[[1,'Let'],[2,'Normal'],[3,'Svær'],[4,'Pro']]));
+  p.appendChild(seg('Pointtavle','board',[['full','Fuld'],['mini','Minimal']]));
 }
 function buildSetup(){
   const me=$('#cMe');me.innerHTML='';
@@ -1817,7 +1821,7 @@ function buildSetup(){
     fillPlist($('#pMe'),L,CFG.exMe[sx],-1,i=>{CFG.exMe[sx]=i;if(CFG.exOpp[sx]===i)CFG.exOpp[sx]=-1;save();buildSetup();},false);
     fillPlist($('#pOpp'),L,CFG.exOpp[sx],CFG.exMe[sx],i=>{CFG.exOpp[sx]=i;save();buildSetup();},true);
     $('#exMeH').textContent='DU SPILLER SOM · '+(sx==='m'?'ATP':'WTA')+' TOP 64';
-    $('#setupNote').textContent=SURF[courtOf(CFG.court).surface].name+' · '+['','Let','Normal','Svær','Pro'][CFG.level]+' · '+'bedst af 3 sæt'+' · '+CFG.games+' partier. Ændres under Indstillinger.';
+    $('#setupNote').textContent=SURF[courtOf(CFG.court).surface].name+' · '+['','Let','Normal','Svær','Pro'][CFG.level]+' · '+(CFG.sets===1?'1 sæt':'bedst af '+CFG.sets+' sæt')+' · '+CFG.games+' partier. Ændres under Indstillinger.';
     $('#bStart').firstChild.textContent='Start kamp ';
   }
 }
