@@ -1,4 +1,4 @@
-<title>Tennis v4.2</title>
+<title>Tennis v4.3</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,6 +48,8 @@ button:focus-visible{outline:2px solid var(--led);outline-offset:2px}
 #msg.show{opacity:1;transform:scale(1)}
 #hawk{position:absolute;left:50%;top:50%;width:min(340px,80vw);aspect-ratio:160/104;transform:translate(-50%,-50%);image-rendering:pixelated;border:3px solid #0b1430;box-shadow:0 6px 0 #0008;pointer-events:none}
 #msg.top{top:calc(var(--st) + 6%)}
+#msg.net b{font-style:italic;color:#ff9a2e;text-shadow:2px 2px 0 #5a1d00,-1px -1px 0 #5a1d00;font-size:clamp(28px,6.5vw,46px)}
+#msg.net small{display:none}
 #msg b{display:inline-block;font-family:var(--f-pixel);font-weight:700;font-size:clamp(26px,7vw,52px);color:var(--led);
   text-shadow:3px 3px 0 #000;letter-spacing:.04em;padding:0 12px}
 #msg small{display:block;font-family:var(--f-pixel);font-size:clamp(12px,3vw,18px);color:#fff;text-shadow:2px 2px 0 #000;margin-top:4px}
@@ -369,7 +371,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.2';
+const VERSION='v4.3';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -717,9 +719,9 @@ const POSES=(()=>{
     PZ({crouch:3,turn:.8,lean:1.5,lf:[-4.5,0],rf:[3.5,0],rh:[-5,9],lh:[-6,6],rac:2.4,cross:true}),           // land, follow-through
     PZ({crouch:2.5,lf:[-5,0],rf:[5,0],rh:[3.5,7],lh:[1,7.5],rac:-1.2,two:true})];
   const bo=[
-    PZ({crouch:3,lean:.6,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,11.5],rac:1.1}),     // ball in the hand at waist height
-    PZ({crouch:3.6,lean:.9,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,13.5],rac:1.1}),   // pushes it down
-    PZ({crouch:3,lean:.6,turn:.6,lf:[-4,0],rf:[3.5,0],rh:[6,8],lh:[-6.4,10.5],rac:1.1})];    // hand waits for it to come back up
+    PZ({crouch:4.6,lean:1.4,turn:.6,lf:[-4.5,0],rf:[3.8,0],rh:[6,9],lh:[-6.4,13],rac:1.1}),     // ball in the hand at waist height
+    PZ({crouch:5.4,lean:1.9,turn:.6,lf:[-4.5,0],rf:[3.8,0],rh:[6,9],lh:[-6.4,15],rac:1.1}),   // pushes it down
+    PZ({crouch:4.6,lean:1.4,turn:.6,lf:[-4.5,0],rf:[3.8,0],rh:[6,9],lh:[-6.4,12],rac:1.1})];    // hand waits for it to come back up
   const onRun=(arr)=>arr.map((ps,i)=>{const r=run[(i*2+1)%8];return PZ(Object.assign({},ps,{lf:r.lf,rf:r.rf,bob:r.bob,crouch:Math.min(ps.crouch,2)}));});
   return {ready,fh,bh,sv,run,sm,bo,fhR:onRun(fh),bhR:onRun(bh),sideP:side(1),sideN:side(-1)};
 })();
@@ -1165,9 +1167,9 @@ function aiUpdate(p,dt){
   if(S.train&&(S.train.kind==='corner'||S.state==='feedwait')){moveTo(p,0,p.side*(HL+.4),dt,.6);return;}
   const b=S.ball,L=p.L,opp=S.players[p.side<0?1:0];
   if(S.state==='serve_ready'||S.state==='toss'){
-    moveTo(p,p.spot.x,p.spot.y,dt,.6);
+    moveTo(p,p.spot.x,p.spot.y,dt,.8);
     if(S.players[S.server]===p){
-      if(S.state==='serve_ready'&&arrived(p)&&S.players[1-S.server].ready&&(S.bounceT||0)>1.35)toss(p);
+      if(S.state==='serve_ready'&&arrived(p)&&S.players[1-S.server].ready&&(S.bounceT||0)>2.25)toss(p);
       if(S.state==='toss'&&!p.armed&&b.vz<p.aiT){const r=Math.random(),big=p.ch.style==='S'||p.ch.style==='P';press(p,S.serveNo===2?(r<(big?.5:.7)?'lob':'flat'):(r<(big?.95:.8)?'flat':'lob'));
         if(p.ch.style==='S'&&S.serveNo===1&&Math.random()<.25)p.atNet=true;}
     }
@@ -1197,11 +1199,11 @@ function aiUpdate(p,dt){
 function humanUpdate(p,dt){
   const b=S.ball,sp=moveSpeed(p);
   if(S.state==='serve_ready'&&S.players[S.server]===p){
-    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.6);return;}
+    if(!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.8);return;}
     const sgn=-p.side*S.sideSign;const lo_=sgn>0?.15:-(SW-.4),hi=sgn>0?SW-.4:-.15;
     const nx=clamp(p.x+IN[p.idx].x*sp*.5*dt,lo_,hi);p.vx=(nx-p.x)/dt;p.vy=0;p.x=nx;p.spot.x=nx;p.x-=p.vx*dt;return;
   }
-  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.6);return;}
+  if(S.state==='serve_ready'&&!arrived(p)){moveTo(p,p.spot.x,p.spot.y,dt,.8);return;}
   if(S.state==='toss'&&S.players[S.server]===p){steer(p,0,0,dt);
     // steer the landing spot inside the service box while the ball is in the air
     const box=p.side*S.sideSign,a=S.aim;if(a){a.x+=IN[p.idx].x*4.5*dt;a.d+=IN[p.idx].y*-p.side*4.5*dt;
@@ -1264,7 +1266,7 @@ function update(dt){
   }
   if(b.held){const sv=S.players[S.server];b.x=sv.x+(sv.side<0?-.3:.3);b.y=sv.y-sv.side*.05;
     // the server bounces the ball a couple of times before the toss
-    if(S.state==='serve_ready'&&arrived(sv)){S.bounceT=(S.bounceT||0)+dt;const t=S.bounceT;b.z=t<1.2?.06+Math.abs(Math.cos(t*Math.PI/.6))*.74:.8;}
+    if(S.state==='serve_ready'&&arrived(sv)){S.bounceT=(S.bounceT||0)+dt;const t=S.bounceT;b.z=t<2?.06+Math.abs(Math.cos(t*Math.PI/.5))*.66:.8;}
     else{S.bounceT=0;b.z=.86;}}
   ev.bounce=0;ev.net=0;ev.cord=0;ev.wall=0;
   stepBall(b,dt,ev,S.surface);
@@ -1279,7 +1281,7 @@ function update(dt){
     else point(hit<0?0:1,'');}                 // landed in and ran past the player: winner
   if(S.train&&S.state==='feedwait'&&S.timer>1.1)trainFeed();
   if(S.tossQ&&S.state==='serve_ready'){const sv=S.players[S.server];if(sv.ai)S.tossQ=false;else if(S.players[1-S.server].ready){S.tossQ=false;press(sv,'flat');}}
-  if(S.state==='dead'||S.state==='fault'){if(S.timer>(S.state==='fault'?1.15:1.7)+(S.hawk?2.6:0)){S.hawk=null;afterDead();}}
+  if(S.state==='dead'||S.state==='fault'){if(S.timer>(S.state==='fault'?.8:1.05)+(S.hawk?2.6:0)){S.hawk=null;afterDead();}}
   b.trail.push(b.x,b.y,b.z);if(b.trail.length>15)b.trail.splice(0,3);
 }
 /* Hawk-Eye: how far inside (+) or outside (-) the nearest relevant line the ball landed, in metres */
@@ -1325,7 +1327,7 @@ function afterDead(){
   const res=awardPoint(w);
   if(S.over)return;
   setupPoint(false);
-  if(res)call(res[0],res[1]);
+  if(res){const plain=!/PARTI|SÆT/.test(res[0]);call(res[0],plain?'':res[1],plain);}
 }
 function nm(i){return S.players[i].ch.short;}
 function awardPoint(w){
@@ -1344,7 +1346,7 @@ function awardPoint(w){
   }
   return [ptCall(),''];
 }
-function ptCall(){const sc=S.sc,N=['0','15','30','40'];const s=S.server;const a=sc.p[s],b=sc.p[1-s];return a===b?N[a]+' ALLE':N[a]+'–'+N[b];}
+function ptCall(){const sc=S.sc,N=['00','15','30','40'];const s=S.server;const a=sc.p[s],b=sc.p[1-s];return N[a]+' - '+N[b];}
 function winGame(w,tb){
   const sc=S.sc,cfg=S.cfg,l=1-w,G0=cfg.games;
   sc.g[w]++;sc.p=[0,0];sc.n=0;
@@ -1363,7 +1365,8 @@ function winGame(w,tb){
 
 /* ================= HUD ================= */
 let msgT=null;
-function call(big,small){if(!S||S.mode==='demo')return;$('#msgBig').textContent=big;$('#msgSmall').textContent=small||'';const m=$('#msg');m.classList.remove('show');void m.offsetWidth;m.classList.add('show');clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),1350);}
+function call(big,small,atNet){if(!S||S.mode==='demo')return;$('#msgBig').textContent=big;$('#msgSmall').textContent=small||'';const m=$('#msg');m.classList.remove('show');
+  m.classList.toggle('net',!!atNet);if(atNet){const y=(proj(0,0,NETC).y-Math.round(VIEW.s))*PX/DPR;m.style.top=Math.round(y-30)+'px';}else m.style.top='';void m.offsetWidth;m.classList.add('show');clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),1350);}
 function ptStr(i){const sc=S.sc;if(sc.tb)return String(sc.p[i]);const N=['0','15','30','40'];
   if(sc.p[0]>=3&&sc.p[1]>=3){if(sc.p[0]===sc.p[1])return '40';return sc.p[i]>sc.p[1-i]?'AD':'40';}return N[sc.p[i]];}
 function updateBoard(){
@@ -1456,7 +1459,7 @@ function frameFor(p){
   const isSrv=S.players[S.server]===p;
   if(isSrv&&S.state==='toss')return b.vz>3.5?sp.sv[1]:b.vz>-1.6?sp.sv[2]:sp.sv[3];
   if(isSrv&&S.state==='serve_ready'&&arrived(p)){const t=S.bounceT||0;
-    if(t<1.2){const ph=(t%.6)/.6;return ph<.12||ph>.88?sp.bo[0]:ph<.4?sp.bo[1]:sp.bo[2];}   // in step with the ball's bounces
+    if(t<2){const ph=(t%.5)/.5;return ph<.12||ph>.88?sp.bo[0]:ph<.4?sp.bo[1]:sp.bo[2];}   // in step with the ball's bounces
     return sp.bo[0];}
   if(p.charge||(p.armed&&!p.armed.serve)){if(b.lastHitter!==p.side&&!b.held&&(b.z>2||(b.vz>0&&b.z>1.4&&Math.abs(p.y)<8)))return sp.sm[0];}
   if(p.charge)return (moving?(p.hand>0?sp.fhR:sp.bhR):(p.hand>0?sp.fh:sp.bh))[0];
