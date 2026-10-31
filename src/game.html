@@ -1,4 +1,4 @@
-<title>Tennis v4.3</title>
+<title>Tennis v4.4</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -371,7 +371,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.3';
+const VERSION='v4.4';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -413,7 +413,7 @@ const LVT=[
  {react:.18,spd:.97,tsig:.2,margin:1.0,sc:.95,net:.11,leave:.72,fault:.06,err:.08},
  {react:.12,spd:1.04,tsig:.13,margin:.78,sc:.76,net:.18,leave:.9,fault:.04,err:.05}];
 function lvp(l){l=Math.max(1,Math.min(4,l));const i=Math.min(2,Math.floor(l-1)),t=l-1-i,a=LVT[i],b=LVT[i+1],o={};for(const k in a)o[k]=a[k]+(b[k]-a[k])*t;return o;}
-const SHOT={drop:{T:1.15,g:9.8,m:.35,sc:.8},flat:{T:.9,g:24,m:1.9,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:2.2,g:9.8,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
+const SHOT={drop:{T:1.15,g:9.8,m:.35,sc:.8},flat:{T:.9,g:24,m:1.9,sc:1.1},slice:{T:1.25,g:7.4,m:.6,sc:.9},lob:{T:1.83,g:14.1,m:1.6,sc:1.0},smash:{T:.62,g:9.8,m:.12,sc:1.2}};
 
 /* ================= settings / storage ================= */
 const DEF={board:'full',court:'hard',exMe:{m:0,w:0},exOpp:{m:-1,w:-1},me:0,opp:-1,surface:'hard',sets:1,games:6,tiebreak:1,level:2,speed:0,assist:0,first:'rnd',tour:0,sex:'m',meM:0,meW:4};
@@ -930,7 +930,7 @@ function stepBall(b,dt,ev,surf){
     b.z=BR;b.bounces++;
     const s=SURF[surf];let e=s.e,f=s.f;
     if(b.bounces===1){if(b.serve){f*=.82;}if(b.spin==='top'){e+=.07;f*=1.1;}else if(b.spin==='slice'){e-=.14;f*=.97;}}
-    b.vz=-b.vz*e;b.vx*=f;b.vy*=f;b.g=b.bounces===1&&b.spin==='top'?Math.max(G,b.g*.95):G;b.ax=0;if(b.vz<.6)b.vz=0;
+    b.vz=-b.vz*e;b.vx*=f;b.vy*=f;b.g=b.bounces===1&&b.spin==='top'?Math.max(G,b.g*.95):b.bounces===1&&b.spin==='lob'?b.g:G;b.ax=0;if(b.vz<.6)b.vz=0;
     if(ev){ev.bounce=b.bounces;ev.bx=b.x;ev.by=b.y;}
   }
   if(b.z<BR){b.z=BR;b.vx*=1-2*dt;b.vy*=1-2*dt;}
