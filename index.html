@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis">
-<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.5)">
+<meta name="description" content="Tennis – 16-bit tennisspil til mobil og browser (v4.6)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Tennis v4.5</title>
+<title>Tennis v4.6</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -388,7 +388,7 @@ h3{font-family:var(--f-pixel);font-size:12px;letter-spacing:.12em;color:var(--di
 <script>
 'use strict';
 /* ================= constants ================= */
-const VERSION='v4.5';
+const VERSION='v4.6';
 const HL=11.885, SW=4.115, DW=5.485, SL=6.40, NETC=0.914, NETP=1.07, POST=6.40, G=9.8, BR=0.033;
 const SURF={
   hard:{name:'Hardcourt',e:.74,f:.84,court:[50,104,178],alt:[47,99,170],out:[58,124,84],out2:[54,117,79],line:[244,247,250],noise:7},
@@ -439,7 +439,7 @@ function load(){try{const a=JSON.parse(localStorage.getItem('tennis.cfg2')||'nul
   const b=JSON.parse(localStorage.getItem('tennis.prog2')||'null');if(b&&b.pts&&b.cups)PROG=b;}catch(e){}}
 function save(){try{localStorage.setItem('tennis.cfg2',JSON.stringify(CFG));localStorage.setItem('tennis.prog2',JSON.stringify(PROG));}catch(e){}}
 load();
-CFG.assist=0;CFG.tiebreak=1;CFG.first='rnd';
+CFG.assist=0;CFG.tiebreak=1;CFG.first='rnd';CFG.sets=3;   // every match is best of three
 if(!CFG.tourMe||typeof CFG.tourMe!=='object')CFG.tourMe={m:0,w:0};
 if(!CFG.exMe||typeof CFG.exMe!=='object')CFG.exMe={m:0,w:0};if(!CFG.exOpp||typeof CFG.exOpp!=='object')CFG.exOpp={m:-1,w:-1};
 
@@ -1629,7 +1629,7 @@ function buildCareer(){
   $('#carTitle').textContent='Sæson '+CAR.season;
   const box=$('#carMe');box.innerHTML='';box.appendChild(charCanvas(chFromEntry(e),32));
   box.insertAdjacentHTML('beforeend','<div><b>'+e.name+'</b><i>Nr. '+e.rank+' på ranglisten · '+Math.round(carTotal())+' point</i><div class="seed">'+(CAR.titles.length?'★ '+CAR.titles.length+' Grand Slam-titel'+(CAR.titles.length>1?'er':''):'Ingen Grand Slam-titler endnu')+'</div></div>');
-  $('#carNext').textContent=sl.name;$('#carNextSub').textContent=sl.city+' · '+SURF[sl.surf].name+' · '+(CAR.sex==='m'?'bedst af 5 sæt':'bedst af 3 sæt')+' pr. kamp';
+  $('#carNext').textContent=sl.name;$('#carNextSub').textContent=sl.city+' · '+SURF[sl.surf].name+' · '+'bedst af 3 sæt'+' pr. kamp';
   $('#carSp').textContent=CAR.sp+' TRÆNINGSPOINT';
   const tr=$('#carTrain');tr.innerHTML='';
   for(const [k,lab] of [['spd','Fart'],['pow','Kraft'],['ctl','Kontrol'],['srv','Serv']]){const v=e[k];const row=document.createElement('div');row.className='train';
@@ -1698,7 +1698,7 @@ function showDraw(){
 }
 function playTourRound(){
   const sl=SLAMS[TOUR.slam],opp=TOUR.slots[myPos()^1];
-  playMatch({mode:'play',meCh:chFromEntry(TOUR.meEntry),oppCh:chFromEntry(opp),oppLevel:oppLvl(opp),surface:sl.surf,venue:'std',sets:TOUR.sex==='m'?5:3,games:CFG.games,tiebreak:CFG.tiebreak,
+  playMatch({mode:'play',meCh:chFromEntry(TOUR.meEntry),oppCh:chFromEntry(opp),oppLevel:oppLvl(opp),surface:sl.surf,venue:'std',sets:3,games:CFG.games,tiebreak:CFG.tiebreak,
     speed:CFG.speed,first:CFG.first,tourName:sl.name,round:TOUR.round});
 }
 
@@ -1791,7 +1791,6 @@ function seg(label,key,vals,after,note){
 }
 function buildSettings(){
   const m=$('#optsMatch');m.innerHTML='';
-  m.appendChild(seg('Sæt','sets',[[1,'1 sæt'],[3,'Bedst af 3'],[5,'Bedst af 5']]));
   m.appendChild(seg('Partier pr. sæt','games',[[2,'2'],[4,'4'],[6,'6']]));
   m.appendChild(seg('Underlag','court',[['hard','Hardcourt'],['ao','Blå hardcourt'],['clay','Grus'],['grass','Græs']],null,'Opvisning og hurtig kamp'));
   const p=$('#optsPlay');p.innerHTML='';
@@ -1811,14 +1810,14 @@ function buildSetup(){
     SLAMS.forEach((t,i)=>{const b=document.createElement('button');b.className='tour'+(CFG.tour===i?' sel':'');const cups=PROG.cups[CFG.sex][i];
       b.innerHTML='<span class="sw" style="background:'+rgb(SURF[t.surf].court)+'"></span><span><b>'+t.name+'</b><i>'+t.city+' · '+SURF[t.surf].name+'</i></span><span class="cup">'+(cups?'★ x'+cups:'')+'</span>';
       b.onclick=()=>{CFG.tour=i;save();buildSetup();};tl.appendChild(b);});
-    $('#setupNote').textContent='128 spillere: top 64 fra '+(CFG.sex==='m'?'ATP':'WTA')+'-ranglisten (19. okt. 2026) og 64 kvalifikanter. Du tager din valgte spillers plads og seedning i lodtrækningen. 7 runder til titlen. Herrer spiller bedst af 5 sæt, damer bedst af 3.';
+    $('#setupNote').textContent='128 spillere: top 64 fra '+(CFG.sex==='m'?'ATP':'WTA')+'-ranglisten (19. okt. 2026) og 64 kvalifikanter. Du tager din valgte spillers plads og seedning i lodtrækningen. 7 runder til titlen. Alle kampe er bedst af 3 sæt.';
     $('#bStart').firstChild.textContent='Til lodtrækningen ';
   }else{
     const sx=CFG.sex,L=realList(sx);
     fillPlist($('#pMe'),L,CFG.exMe[sx],-1,i=>{CFG.exMe[sx]=i;if(CFG.exOpp[sx]===i)CFG.exOpp[sx]=-1;save();buildSetup();},false);
     fillPlist($('#pOpp'),L,CFG.exOpp[sx],CFG.exMe[sx],i=>{CFG.exOpp[sx]=i;save();buildSetup();},true);
     $('#exMeH').textContent='DU SPILLER SOM · '+(sx==='m'?'ATP':'WTA')+' TOP 64';
-    $('#setupNote').textContent=SURF[courtOf(CFG.court).surface].name+' · '+['','Let','Normal','Svær','Pro'][CFG.level]+' · '+(CFG.sets===1?'1 sæt':'bedst af '+CFG.sets)+' · '+CFG.games+' partier. Ændres under Indstillinger.';
+    $('#setupNote').textContent=SURF[courtOf(CFG.court).surface].name+' · '+['','Let','Normal','Svær','Pro'][CFG.level]+' · '+'bedst af 3 sæt'+' · '+CFG.games+' partier. Ændres under Indstillinger.';
     $('#bStart').firstChild.textContent='Start kamp ';
   }
 }
