@@ -1897,3 +1897,74 @@ startDemo();show('sTitle');
 requestAnimationFrame(t=>{last=t;frame(t);});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(S)renderStatic();});
 </script>
+<!-- spillehal-knap: knap tilbage til seranodk.github.io, kun synlig i hovedmenuen -->
+<style>
+#spillehalKnap{position:fixed;z-index:2147483000;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;
+  font:600 13px/1.1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:0;text-transform:none;
+  color:#fff;background:rgba(12,14,22,.72);border:1px solid rgba(255,255,255,.35);text-decoration:none;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;white-space:nowrap}
+#spillehalKnap:hover{background:rgba(12,14,22,.88)}
+#spillehalKnap:focus-visible{outline:2px solid #ffd23f;outline-offset:2px}
+#spillehalKnap[hidden]{display:none!important}
+</style>
+<a id="spillehalKnap" href="https://seranodk.github.io/" hidden>&larr; Tilbage til spillehallen</a>
+<script>
+(function(){
+  var MENU='#sTitle', URL='https://seranodk.github.io/';
+  var k=document.getElementById('spillehalKnap'); if(!k) return;
+  ['pointerdown','mousedown','touchstart','click','keydown'].forEach(function(t){
+    k.addEventListener(t,function(e){e.stopPropagation();},{passive:true});});
+  k.addEventListener('pointerup',function(){location.href=URL;});
+  function synlig(el){
+    if(!el||!el.isConnected) return false;
+    if(el.checkVisibility) return el.checkVisibility({opacityProperty:true,visibilityProperty:true});
+    var r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return false;
+    for(var e=el;e&&e.nodeType===1;e=e.parentElement){var s=getComputedStyle(e);
+      if(s.display==='none'||s.visibility==='hidden'||+s.opacity<0.05) return false;}
+    return true;
+  }
+  /* ryk ned under knapper eller bokse, der allerede står oppe til højre */
+  function forhindringer(){
+    var vw=innerWidth, vh=innerHeight, ud=[];
+    var alle=document.body.getElementsByTagName('*');
+    for(var i=0;i<alle.length;i++){var e=alle[i];
+      if(e===k||k.contains(e)||e.contains(k)) continue;
+      var b=e.getBoundingClientRect();
+      if(b.width<4||b.height<4||b.top>90||b.right<vw*0.4||b.width*b.height>vw*vh*0.3) continue;
+      var s=getComputedStyle(e);
+      var aktiv=/^(BUTTON|A|SELECT|INPUT|CANVAS|IMG|SVG)$/i.test(e.tagName)||e.getAttribute('role')==='button';
+      var flade=!/rgba\(0, 0, 0, 0\)|transparent/.test(s.backgroundColor)||s.backgroundImage!=='none'||parseFloat(s.borderTopWidth)>0;
+      if(!(aktiv||flade)) continue;
+      if(e.checkVisibility&&!e.checkVisibility({opacityProperty:true,visibilityProperty:true})) continue;
+      if(s.position!=='fixed'&&s.position!=='absolute'&&s.position!=='sticky'&&!aktiv&&b.width>vw*0.8) continue;
+      /* skjult bag et menu-lag (fx ikoner bag et halvgennemsigtigt overlay)? så tæller den ikke */
+      var stak=document.elementsFromPoint?document.elementsFromPoint(Math.min(vw-1,b.left+b.width/2),Math.min(vh-1,b.top+b.height/2)):[];
+      var top=null; for(var j=0;j<stak.length;j++){ if(stak[j]!==k&&!k.contains(stak[j])){top=stak[j];break;} }
+      if(top&&top.tagName!=='CANVAS'&&top!==e&&!e.contains(top)&&!top.contains(e)){var tb=top.getBoundingClientRect(); if(tb.width*tb.height>vw*vh*0.3) continue;}
+      ud.push(b);
+    }
+    return ud;
+  }
+  function placer(){
+    k.style.top=''; var bokse=forhindringer();
+    for(var n=0;n<6;n++){
+      var r=k.getBoundingClientRect(), ny=0;
+      bokse.forEach(function(b){ if(b.left<r.right&&b.right>r.left&&b.top<r.bottom&&b.bottom>r.top) ny=Math.max(ny,b.bottom); });
+      if(!ny) break;
+      k.style.top=(ny+8)+'px';
+    }
+  }
+  var var_synlig=false;
+  var tik=0;
+  function tjek(){
+    var vis=synlig(document.querySelector(MENU));
+    if(vis!==var_synlig){var_synlig=vis; k.hidden=!vis; if(vis) placer();}
+    else if(vis&&++tik%4===0) placer();   /* menuen kan ændre sig, mens den er åben */
+  }
+  setInterval(tjek,250); addEventListener('resize',function(){if(var_synlig) placer();});
+  tjek();
+})();
+</script>
+<!-- /spillehal-knap -->
